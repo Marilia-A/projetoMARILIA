@@ -27,3 +27,13 @@ class RoteiroResumo(RoteiroBase):
 
 class RoteiroLer(RoteiroResumo):
     etapas: list[EtapaLer] = []
+
+
+class TermoCriar(SQLModel):
+    nome: str
+    definicao: str
+    imagem: str | None = None
+
+
+class TermoLer(TermoCriar):
+    id: int
