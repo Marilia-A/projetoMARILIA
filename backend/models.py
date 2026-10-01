@@ -1,7 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 from sqlmodel import SQLModel, Field, Relationship
+
+
+def agora() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class TipoUsuario(str, Enum):
@@ -71,7 +75,7 @@ class HistoricoInteracao(SQLModel, table=True):
     nivel_profundidade: int
     pergunta: str
     resposta: str
-    data_hora: datetime = Field(default_factory=datetime.now)
+    data_hora: datetime = Field(default_factory=agora)
 
 
 class TermoGlossario(SQLModel, table=True):
@@ -90,4 +94,4 @@ class Badge(SQLModel, table=True):
 class AlunoBadge(SQLModel, table=True):
     aluno_id: int = Field(foreign_key="usuario.id", primary_key=True)
     badge_id: int = Field(foreign_key="badge.id", primary_key=True)
-    data_conquista: datetime = Field(default_factory=datetime.now)
+    data_conquista: datetime = Field(default_factory=agora)

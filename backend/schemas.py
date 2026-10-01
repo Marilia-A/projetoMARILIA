@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from sqlmodel import SQLModel
 
-from backend.models import TipoUsuario
+from backend.models import StatusProgresso, TipoUsuario
 
 
 class EtapaCriar(SQLModel):
@@ -54,3 +56,15 @@ class UsuarioCriar(UsuarioBase):
 
 class UsuarioLer(UsuarioBase):
     id: int
+
+
+class ProgressoAtualizar(SQLModel):
+    status: StatusProgresso
+
+
+class ProgressoLer(SQLModel):
+    id: int
+    aluno_id: int
+    roteiro_id: int
+    status: StatusProgresso
+    data_conclusao: datetime | None = None
