@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 
 from sqlmodel import SQLModel
 
@@ -68,3 +69,26 @@ class ProgressoLer(SQLModel):
     roteiro_id: int
     status: StatusProgresso
     data_conclusao: datetime | None = None
+
+
+class NivelProfundidade(str, Enum):
+    basico = "basico"
+    intermediario = "intermediario"
+    avancado = "avancado"
+
+
+class PerguntaTutor(SQLModel):
+    aluno_id: int
+    roteiro_id: int | None = None
+    nivel_profundidade: NivelProfundidade = NivelProfundidade.basico
+    pergunta: str
+
+
+class HistoricoLer(SQLModel):
+    id: int
+    aluno_id: int
+    roteiro_id: int | None = None
+    nivel_profundidade: str
+    pergunta: str
+    resposta: str
+    data_hora: datetime
