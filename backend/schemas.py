@@ -9,6 +9,7 @@ from backend.models import StatusProgresso, TipoUsuario
 class EtapaCriar(SQLModel):
     ordem: int
     conteudo: str
+    imagem: str | None = None
 
 
 class EtapaLer(EtapaCriar):
@@ -20,6 +21,7 @@ class RoteiroBase(SQLModel):
     descricao: str
     materiais: str
     codigo_comentado: str
+    imagem: str | None = None
 
 
 class RoteiroCriar(RoteiroBase):

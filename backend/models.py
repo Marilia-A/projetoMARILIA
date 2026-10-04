@@ -47,6 +47,7 @@ class Roteiro(SQLModel, table=True):
     descricao: str
     materiais: str
     codigo_comentado: str
+    imagem: str | None = None
 
     etapas: list["Etapa"] = Relationship(back_populates="roteiro", cascade_delete=True)
 
@@ -55,6 +56,7 @@ class Etapa(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     ordem: int
     conteudo: str
+    imagem: str | None = None
     roteiro_id: int = Field(foreign_key="roteiro.id", ondelete="CASCADE")
 
     roteiro: Roteiro | None = Relationship(back_populates="etapas")
@@ -72,7 +74,7 @@ class HistoricoInteracao(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     aluno_id: int = Field(foreign_key="usuario.id")
     roteiro_id: int | None = Field(default=None, foreign_key="roteiro.id")
-    nivel_profundidade: int
+    nivel_profundidade: str
     pergunta: str
     resposta: str
     data_hora: datetime = Field(default_factory=agora)
