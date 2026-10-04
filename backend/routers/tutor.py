@@ -18,17 +18,17 @@ URL_GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/{modelo}:g
 TENTATIVAS = 3
 
 INSTRUCOES_NIVEL = {
-    NivelProfundidade.basico: (
-        "Responda em até 4 frases curtas, com palavras simples e um exemplo do dia a dia. "
-        "Não use termos técnicos sem explicar."
+    NivelProfundidade.superficial: (
+        "Dê uma explicação superficial: breve e direta, em até 4 frases curtas, com palavras "
+        "simples, só para esclarecer a dúvida pontual. Não use termos técnicos sem explicar."
     ),
-    NivelProfundidade.intermediario: (
-        "Responda em um ou dois parágrafos, explicando o porquê das coisas e "
-        "relacionando com os componentes e o código do roteiro."
+    NivelProfundidade.moderado: (
+        "Dê uma explicação moderada: um ou dois parágrafos, mostrando o raciocínio por trás "
+        "da resposta e exemplos práticos ligados aos componentes e ao código do roteiro."
     ),
-    NivelProfundidade.avancado: (
-        "Responda de forma detalhada, incluindo conceitos de eletrônica e programação "
-        "envolvidos, e mostre trechos de código quando ajudar."
+    NivelProfundidade.detalhado: (
+        "Dê uma explicação detalhada: completa e aprofundada, relacionando com os conceitos "
+        "teóricos de eletrônica e programação envolvidos, e mostre trechos de código quando ajudar."
     ),
 }
 

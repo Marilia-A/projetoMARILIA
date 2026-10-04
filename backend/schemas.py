@@ -72,15 +72,15 @@ class ProgressoLer(SQLModel):
 
 
 class NivelProfundidade(str, Enum):
-    basico = "basico"
-    intermediario = "intermediario"
-    avancado = "avancado"
+    superficial = "superficial"
+    moderado = "moderado"
+    detalhado = "detalhado"
 
 
 class PerguntaTutor(SQLModel):
     aluno_id: int
     roteiro_id: int | None = None
-    nivel_profundidade: NivelProfundidade = NivelProfundidade.basico
+    nivel_profundidade: NivelProfundidade = NivelProfundidade.superficial
     pergunta: str
 
 
