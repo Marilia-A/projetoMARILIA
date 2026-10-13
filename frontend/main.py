@@ -2,6 +2,7 @@ import flet as ft
 import httpx
 
 API = "http://127.0.0.1:8000"
+ALUNO_ID = 1  # provisório, até existir login
 
 
 def main(page: ft.Page):
@@ -89,6 +90,71 @@ def main(page: ft.Page):
                         padding=15,
                         border_radius=8,
                     )
+                ],
+            )
+        )
+
+        nivel = ft.RadioGroup(
+            value="superficial",
+            content=ft.Row(
+                [
+                    ft.Radio(value="superficial", label="Superficial"),
+                    ft.Radio(value="moderado", label="Moderado"),
+                    ft.Radio(value="detalhado", label="Detalhado"),
+                ]
+            ),
+        )
+        campo_pergunta = ft.TextField(
+            label="Escreva sua dúvida sobre este roteiro",
+            multiline=True,
+            min_lines=2,
+            max_lines=5,
+        )
+        carregando = ft.ProgressRing(width=24, height=24, visible=False)
+        resposta_tutor = ft.Markdown(
+            "",
+            selectable=True,
+            extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
+        )
+
+        def perguntar(e):
+            texto = (campo_pergunta.value or "").strip()
+            if not texto:
+                return
+            botao_perguntar.disabled = True
+            carregando.visible = True
+            resposta_tutor.value = ""
+            page.update()
+            try:
+                r = httpx.post(
+                    f"{API}/tutor/perguntar",
+                    json={
+                        "aluno_id": ALUNO_ID,
+                        "roteiro_id": roteiro_id,
+                        "nivel_profundidade": nivel.value,
+                        "pergunta": texto,
+                    },
+                    timeout=90,
+                )
+                r.raise_for_status()
+                resposta_tutor.value = r.json()["resposta"]
+            except httpx.HTTPError:
+                resposta_tutor.value = "Não foi possível falar com o tutor. Tente de novo."
+            botao_perguntar.disabled = False
+            carregando.visible = False
+            page.update()
+
+        botao_perguntar = ft.FilledButton("Perguntar", on_click=perguntar)
+
+        paginas.append(
+            (
+                "Tire suas dúvidas",
+                [
+                    ft.Text("Escolha o nível da explicação:", size=16),
+                    nivel,
+                    campo_pergunta,
+                    ft.Row([botao_perguntar, carregando]),
+                    resposta_tutor,
                 ],
             )
         )
