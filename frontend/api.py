@@ -57,6 +57,19 @@ def excluir_roteiro(roteiro_id: int):
     _requisicao("DELETE", f"/roteiros/{roteiro_id}")
 
 
+# ---------- Progresso ----------
+
+def listar_progresso(aluno_id: int) -> dict:
+    lista = _requisicao("GET", f"/alunos/{aluno_id}/progresso")
+    return {p["roteiro_id"]: p["status"] for p in lista}
+
+
+def atualizar_progresso(aluno_id: int, roteiro_id: int, status: str) -> dict:
+    return _requisicao(
+        "PUT", f"/alunos/{aluno_id}/progresso/{roteiro_id}", json={"status": status}
+    )
+
+
 # ---------- Glossário ----------
 
 def listar_termos(busca: str | None = None) -> list:

@@ -6,8 +6,17 @@ import navegacao
 import sessao
 
 
+def icone_status(status):
+    if status == "concluido":
+        return ft.Icon(ft.Icons.CHECK_CIRCLE, color=ft.Colors.GREEN, tooltip="Concluído")
+    if status == "em_andamento":
+        return ft.Icon(ft.Icons.TIMELAPSE, color=ft.Colors.AMBER, tooltip="Em andamento")
+    return None
+
+
 def mostrar(page: ft.Page):
     resultados = ft.Column()
+    eh_aluno = sessao.usuario()["tipo"] == "aluno"
 
     def carregar():
         texto = (campo_busca.value or "").strip()
@@ -17,6 +26,13 @@ def mostrar(page: ft.Page):
             resultados.controls = [ft.Text(erro.mensagem)]
             page.update()
             return
+
+        progresso = {}
+        if eh_aluno:
+            try:
+                progresso = api.listar_progresso(sessao.usuario()["id"])
+            except api.ErroAPI:
+                pass
 
         if not roteiros:
             resultados.controls = [
@@ -29,6 +45,7 @@ def mostrar(page: ft.Page):
                         leading=ft.Icon(ft.Icons.MEMORY),
                         title=ft.Text(r["titulo"], weight=ft.FontWeight.BOLD),
                         subtitle=ft.Text(r["descricao"]),
+                        trailing=icone_status(progresso.get(r["id"])),
                         on_click=lambda e, rid=r["id"]: navegacao.ir("roteiro", roteiro_id=rid),
                     )
                 )

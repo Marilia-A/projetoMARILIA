@@ -17,6 +17,19 @@ def mostrar(page: ft.Page, roteiro_id: int):
         )
         return
 
+    usuario = sessao.usuario()
+    eh_aluno = usuario["tipo"] == "aluno"
+    progresso = {"status": None}
+
+    if eh_aluno:
+        try:
+            progresso["status"] = api.listar_progresso(usuario["id"]).get(roteiro_id)
+            if progresso["status"] is None:
+                api.atualizar_progresso(usuario["id"], roteiro_id, "em_andamento")
+                progresso["status"] = "em_andamento"
+        except api.ErroAPI:
+            pass
+
     capa = [ft.Text(roteiro["descricao"], size=16)]
     if roteiro["imagem"]:
         capa.append(c.imagem(roteiro["imagem"]))
@@ -82,7 +95,7 @@ def mostrar(page: ft.Page, roteiro_id: int):
         page.update()
         try:
             resposta_tutor.value = api.perguntar_tutor(
-                sessao.usuario()["id"], roteiro_id, nivel.value, texto
+                usuario["id"], roteiro_id, nivel.value, texto
             )
         except api.ErroAPI:
             resposta_tutor.value = "Não foi possível falar com o tutor. Tente de novo."
@@ -92,18 +105,42 @@ def mostrar(page: ft.Page, roteiro_id: int):
 
     botao_perguntar = ft.FilledButton("Perguntar", on_click=perguntar)
 
-    paginas.append(
-        (
-            "Tire suas dúvidas",
-            [
-                ft.Text("Escolha o nível da explicação:", size=16),
-                nivel,
-                campo_pergunta,
-                ft.Row([botao_perguntar, carregando]),
-                resposta_tutor,
-            ],
+    pagina_duvidas = [
+        ft.Text("Escolha o nível da explicação:", size=16),
+        nivel,
+        campo_pergunta,
+        ft.Row([botao_perguntar, carregando]),
+        resposta_tutor,
+    ]
+
+    if eh_aluno:
+        texto_concluido = ft.Text(
+            "Roteiro concluído!", color=ft.Colors.GREEN, weight=ft.FontWeight.BOLD, size=16
         )
-    )
+        aviso_erro = ft.Text("", color=ft.Colors.RED)
+
+        def ajustar_conclusao():
+            concluido = progresso["status"] == "concluido"
+            botao_concluir.visible = not concluido
+            texto_concluido.visible = concluido
+
+        def concluir(e):
+            try:
+                api.atualizar_progresso(usuario["id"], roteiro_id, "concluido")
+                progresso["status"] = "concluido"
+                aviso_erro.value = ""
+            except api.ErroAPI as erro:
+                aviso_erro.value = erro.mensagem
+            ajustar_conclusao()
+            page.update()
+
+        botao_concluir = ft.FilledButton(
+            "Marcar como concluído", icon=ft.Icons.CHECK, on_click=concluir
+        )
+        ajustar_conclusao()
+        pagina_duvidas += [ft.Divider(), botao_concluir, texto_concluido, aviso_erro]
+
+    paginas.append(("Tire suas dúvidas", pagina_duvidas))
 
     estado = {"atual": 0}
 
