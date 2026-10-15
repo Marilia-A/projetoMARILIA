@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend import models  # noqa: F401
 from backend.database import criar_tabelas
-from backend.routers import glossario, progresso, roteiros, tutor, usuarios
+from backend.routers import glossario, progresso, roteiros, tutor, upload, usuarios
 from backend.seed import carregar_dados_iniciais
 
 PASTA_IMAGENS = Path(__file__).parent / "imagens"
@@ -26,6 +26,7 @@ app.include_router(glossario.router)
 app.include_router(usuarios.router)
 app.include_router(progresso.router)
 app.include_router(tutor.router)
+app.include_router(upload.router)
 app.mount("/imagens", StaticFiles(directory=PASTA_IMAGENS), name="imagens")
 
 @app.get("/")

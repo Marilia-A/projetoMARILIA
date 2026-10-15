@@ -65,7 +65,7 @@ class Etapa(SQLModel, table=True):
 class Progresso(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     aluno_id: int = Field(foreign_key="usuario.id")
-    roteiro_id: int = Field(foreign_key="roteiro.id")
+    roteiro_id: int = Field(foreign_key="roteiro.id", ondelete="CASCADE")
     status: StatusProgresso = StatusProgresso.nao_iniciado
     data_conclusao: datetime | None = None
 
@@ -73,7 +73,7 @@ class Progresso(SQLModel, table=True):
 class HistoricoInteracao(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     aluno_id: int = Field(foreign_key="usuario.id")
-    roteiro_id: int | None = Field(default=None, foreign_key="roteiro.id")
+    roteiro_id: int | None = Field(default=None, foreign_key="roteiro.id", ondelete="SET NULL")
     nivel_profundidade: str
     pergunta: str
     resposta: str
