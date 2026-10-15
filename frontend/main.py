@@ -49,6 +49,95 @@ def main(page: ft.Page):
         )
         return linha, campo
 
+    def seletor_imagem(caminho, pasta, aviso):
+        estado = {"caminho": caminho}
+        area = ft.Row()
+
+        async def escolher(e):
+            arquivos = await seletor_arquivos.pick_files(
+                allow_multiple=False, file_type=ft.FilePickerFileType.IMAGE
+            )
+            if not arquivos:
+                return
+            arq = arquivos[0]
+            try:
+                with open(arq.path, "rb") as f:
+                    r = httpx.post(
+                        f"{API}/upload/{pasta}",
+                        files={"arquivo": (arq.name, f)},
+                        timeout=30,
+                    )
+                r.raise_for_status()
+                estado["caminho"] = r.json()["caminho"]
+                aviso.value = ""
+            except httpx.HTTPStatusError as erro:
+                aviso.value = erro.response.json().get("detail", "Erro ao enviar a imagem.")
+            except (httpx.HTTPError, OSError):
+                aviso.value = "Não foi possível enviar a imagem."
+            atualizar()
+            page.update()
+
+        def remover(e):
+            estado["caminho"] = None
+            atualizar()
+            page.update()
+
+        def atualizar():
+            if estado["caminho"]:
+                area.controls = [
+                    imagem(estado["caminho"], altura=120),
+                    ft.IconButton(icon=ft.Icons.CLOSE, tooltip="Remover imagem", on_click=remover),
+                ]
+            else:
+                area.controls = [
+                    ft.OutlinedButton("Escolher imagem", icon=ft.Icons.IMAGE, on_click=escolher)
+                ]
+
+        atualizar()
+        return area, lambda: estado["caminho"]
+
+    def confirmar_exclusao(titulo_dialogo, mensagem, caminho_api, depois):
+        def excluir(e):
+            page.pop_dialog()
+            try:
+                httpx.delete(f"{API}{caminho_api}", timeout=10).raise_for_status()
+            except httpx.HTTPError:
+                pass
+            depois()
+
+        page.show_dialog(
+            ft.AlertDialog(
+                title=ft.Text(titulo_dialogo),
+                content=ft.Text(mensagem),
+                actions=[
+                    ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
+                    ft.FilledButton("Excluir", on_click=excluir),
+                ],
+            )
+        )
+
+    def cartao_gerenciar(titulo_item, subtitulo, ao_editar, ao_excluir):
+        return ft.Card(
+            content=ft.ListTile(
+                title=ft.Text(titulo_item, weight=ft.FontWeight.BOLD),
+                subtitle=ft.Text(subtitulo, max_lines=2),
+                trailing=ft.Row(
+                    [
+                        ft.IconButton(icon=ft.Icons.EDIT, tooltip="Editar", on_click=ao_editar),
+                        ft.IconButton(
+                            icon=ft.Icons.DELETE,
+                            icon_color=ft.Colors.RED,
+                            tooltip="Excluir",
+                            on_click=ao_excluir,
+                        ),
+                    ],
+                    tight=True,
+                ),
+            )
+        )
+
+    # ---------- Telas do aluno ----------
+
     def tela_lista(e=None):
         resultados = ft.Column()
 
@@ -86,9 +175,7 @@ def main(page: ft.Page):
                 [
                     titulo("Roteiros"),
                     ft.IconButton(icon=ft.Icons.REFRESH, on_click=lambda e: carregar()),
-                    ft.OutlinedButton(
-                        "Glossário", icon=ft.Icons.MENU_BOOK, on_click=tela_glossario
-                    ),
+                    ft.OutlinedButton("Glossário", icon=ft.Icons.MENU_BOOK, on_click=tela_glossario),
                     ft.OutlinedButton(
                         "Gerenciar roteiros", icon=ft.Icons.SETTINGS, on_click=tela_gerenciar
                     ),
@@ -125,9 +212,7 @@ def main(page: ft.Page):
                     if t["imagem"]:
                         conteudo.append(imagem(t["imagem"], altura=150))
                     cartoes.append(
-                        ft.Card(
-                            content=ft.Container(padding=15, content=ft.Column(conteudo))
-                        )
+                        ft.Card(content=ft.Container(padding=15, content=ft.Column(conteudo)))
                     )
                 resultados.controls = cartoes
             page.update()
@@ -139,6 +224,11 @@ def main(page: ft.Page):
                 [
                     ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=tela_lista),
                     titulo("Glossário"),
+                    ft.OutlinedButton(
+                        "Gerenciar glossário",
+                        icon=ft.Icons.SETTINGS,
+                        on_click=tela_gerenciar_glossario,
+                    ),
                 ]
             ),
             linha_busca,
@@ -303,59 +393,24 @@ def main(page: ft.Page):
             return
 
         linhas = [
-            ft.Card(
-                content=ft.ListTile(
-                    title=ft.Text(r["titulo"], weight=ft.FontWeight.BOLD),
-                    subtitle=ft.Text(r["descricao"]),
-                    trailing=ft.Row(
-                        [
-                            ft.IconButton(
-                                icon=ft.Icons.EDIT,
-                                tooltip="Editar",
-                                on_click=lambda e, rid=r["id"]: tela_formulario(rid),
-                            ),
-                            ft.IconButton(
-                                icon=ft.Icons.DELETE,
-                                icon_color=ft.Colors.RED,
-                                tooltip="Excluir",
-                                on_click=lambda e, r=r: confirmar_exclusao(r),
-                            ),
-                        ],
-                        tight=True,
-                    ),
-                )
+            cartao_gerenciar(
+                r["titulo"],
+                r["descricao"],
+                lambda e, rid=r["id"]: tela_formulario(rid),
+                lambda e, r=r: confirmar_exclusao(
+                    "Excluir roteiro",
+                    f'Excluir "{r["titulo"]}"? O progresso dos alunos '
+                    "nesse roteiro também será apagado.",
+                    f"/roteiros/{r['id']}",
+                    tela_gerenciar,
+                ),
             )
             for r in roteiros
         ]
         mostrar(
             cabecalho,
-            ft.FilledButton(
-                "Novo roteiro", icon=ft.Icons.ADD, on_click=lambda e: tela_formulario()
-            ),
+            ft.FilledButton("Novo roteiro", icon=ft.Icons.ADD, on_click=lambda e: tela_formulario()),
             *(linhas or [ft.Text("Nenhum roteiro cadastrado.")]),
-        )
-
-    def confirmar_exclusao(roteiro):
-        def excluir(e):
-            page.pop_dialog()
-            try:
-                httpx.delete(f"{API}/roteiros/{roteiro['id']}", timeout=10).raise_for_status()
-            except httpx.HTTPError:
-                pass
-            tela_gerenciar()
-
-        page.show_dialog(
-            ft.AlertDialog(
-                title=ft.Text("Excluir roteiro"),
-                content=ft.Text(
-                    f'Excluir "{roteiro["titulo"]}"? O progresso dos alunos '
-                    "nesse roteiro também será apagado."
-                ),
-                actions=[
-                    ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
-                    ft.FilledButton("Excluir", on_click=excluir),
-                ],
-            )
         )
 
     def tela_formulario(roteiro_id=None):
@@ -372,57 +427,6 @@ def main(page: ft.Page):
 
         aviso = ft.Text(color=ft.Colors.RED)
 
-        def seletor_imagem(caminho):
-            estado = {"caminho": caminho}
-            area = ft.Row()
-
-            async def escolher(e):
-                arquivos = await seletor_arquivos.pick_files(
-                    allow_multiple=False, file_type=ft.FilePickerFileType.IMAGE
-                )
-                if not arquivos:
-                    return
-                arq = arquivos[0]
-                try:
-                    with open(arq.path, "rb") as f:
-                        r = httpx.post(
-                            f"{API}/upload/roteiros",
-                            files={"arquivo": (arq.name, f)},
-                            timeout=30,
-                        )
-                    r.raise_for_status()
-                    estado["caminho"] = r.json()["caminho"]
-                    aviso.value = ""
-                except httpx.HTTPStatusError as erro:
-                    aviso.value = erro.response.json().get("detail", "Erro ao enviar a imagem.")
-                except (httpx.HTTPError, OSError):
-                    aviso.value = "Não foi possível enviar a imagem."
-                atualizar()
-                page.update()
-
-            def remover(e):
-                estado["caminho"] = None
-                atualizar()
-                page.update()
-
-            def atualizar():
-                if estado["caminho"]:
-                    area.controls = [
-                        imagem(estado["caminho"], altura=120),
-                        ft.IconButton(
-                            icon=ft.Icons.CLOSE, tooltip="Remover imagem", on_click=remover
-                        ),
-                    ]
-                else:
-                    area.controls = [
-                        ft.OutlinedButton(
-                            "Escolher imagem", icon=ft.Icons.IMAGE, on_click=escolher
-                        )
-                    ]
-
-            atualizar()
-            return area, lambda: estado["caminho"]
-
         campo_titulo = ft.TextField(label="Título", value=dados.get("titulo", ""))
         campo_descricao = ft.TextField(
             label="Descrição", value=dados.get("descricao", ""), multiline=True, min_lines=2
@@ -437,7 +441,7 @@ def main(page: ft.Page):
             min_lines=6,
             text_style=ft.TextStyle(font_family="Consolas"),
         )
-        imagem_roteiro = seletor_imagem(dados.get("imagem"))
+        imagem_roteiro = seletor_imagem(dados.get("imagem"), "roteiros", aviso)
 
         etapas = []
         coluna_etapas = ft.Column()
@@ -455,10 +459,8 @@ def main(page: ft.Page):
         def adicionar_etapa(conteudo="", caminho=None):
             et = {
                 "rotulo": ft.Text(weight=ft.FontWeight.BOLD),
-                "campo": ft.TextField(
-                    label="Conteúdo", value=conteudo, multiline=True, min_lines=2
-                ),
-                "imagem": seletor_imagem(caminho),
+                "campo": ft.TextField(label="Conteúdo", value=conteudo, multiline=True, min_lines=2),
+                "imagem": seletor_imagem(caminho, "roteiros", aviso),
             }
             et["cartao"] = ft.Card(
                 content=ft.Container(
@@ -550,6 +552,112 @@ def main(page: ft.Page):
             ft.Row(
                 [
                     ft.OutlinedButton("Cancelar", on_click=tela_gerenciar),
+                    ft.FilledButton("Salvar", icon=ft.Icons.SAVE, on_click=salvar),
+                ]
+            ),
+        )
+
+    # ---------- Gerenciar glossário (professor/admin) ----------
+
+    def tela_gerenciar_glossario(e=None):
+        cabecalho = ft.Row(
+            [
+                ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=tela_glossario),
+                titulo("Gerenciar glossário"),
+            ]
+        )
+        try:
+            termos = buscar("/glossario")
+        except httpx.HTTPError:
+            mostrar(cabecalho, ft.Text("Não foi possível conectar ao servidor."))
+            return
+
+        linhas = [
+            cartao_gerenciar(
+                t["nome"],
+                t["definicao"],
+                lambda e, tid=t["id"]: tela_formulario_termo(tid),
+                lambda e, t=t: confirmar_exclusao(
+                    "Excluir termo",
+                    f'Excluir o termo "{t["nome"]}"?',
+                    f"/glossario/{t['id']}",
+                    tela_gerenciar_glossario,
+                ),
+            )
+            for t in termos
+        ]
+        mostrar(
+            cabecalho,
+            ft.FilledButton(
+                "Novo termo", icon=ft.Icons.ADD, on_click=lambda e: tela_formulario_termo()
+            ),
+            *(linhas or [ft.Text("Nenhum termo cadastrado.")]),
+        )
+
+    def tela_formulario_termo(termo_id=None):
+        dados = {}
+        if termo_id:
+            try:
+                dados = buscar(f"/glossario/{termo_id}")
+            except httpx.HTTPError:
+                mostrar(
+                    ft.Text("Não foi possível abrir o termo."),
+                    ft.OutlinedButton("Voltar", on_click=tela_gerenciar_glossario),
+                )
+                return
+
+        aviso = ft.Text(color=ft.Colors.RED)
+        campo_nome = ft.TextField(label="Nome do termo", value=dados.get("nome", ""))
+        campo_definicao = ft.TextField(
+            label="Definição", value=dados.get("definicao", ""), multiline=True, min_lines=3
+        )
+        imagem_termo = seletor_imagem(dados.get("imagem"), "glossario", aviso)
+
+        def salvar(e):
+            if not (campo_nome.value or "").strip() or not (campo_definicao.value or "").strip():
+                aviso.value = "Preencha o nome e a definição."
+                page.update()
+                return
+
+            corpo = {
+                "nome": campo_nome.value.strip(),
+                "definicao": campo_definicao.value.strip(),
+                "imagem": imagem_termo[1](),
+            }
+            try:
+                if termo_id:
+                    r = httpx.put(f"{API}/glossario/{termo_id}", json=corpo, timeout=10)
+                else:
+                    r = httpx.post(f"{API}/glossario", json=corpo, timeout=10)
+                r.raise_for_status()
+            except httpx.HTTPStatusError as erro:
+                if erro.response.status_code == 409:
+                    aviso.value = "Já existe um termo com esse nome."
+                else:
+                    aviso.value = "Não foi possível salvar o termo."
+                page.update()
+                return
+            except httpx.HTTPError:
+                aviso.value = "Não foi possível salvar o termo."
+                page.update()
+                return
+            tela_gerenciar_glossario()
+
+        mostrar(
+            ft.Row(
+                [
+                    ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=tela_gerenciar_glossario),
+                    titulo("Editar termo" if termo_id else "Novo termo"),
+                ]
+            ),
+            campo_nome,
+            campo_definicao,
+            ft.Text("Imagem do termo", weight=ft.FontWeight.BOLD),
+            imagem_termo[0],
+            aviso,
+            ft.Row(
+                [
+                    ft.OutlinedButton("Cancelar", on_click=tela_gerenciar_glossario),
                     ft.FilledButton("Salvar", icon=ft.Icons.SAVE, on_click=salvar),
                 ]
             ),
