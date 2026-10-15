@@ -50,6 +50,13 @@ TERMOS = [
     },
 ]
 
+# usuários de teste (senha 123456)
+USUARIOS = [
+    {"nome": "Aluno Teste", "email": "aluno@teste.com", "tipo": TipoUsuario.aluno, "ano_escolar": "8º ano"},
+    {"nome": "Professor Teste", "email": "professor@teste.com", "tipo": TipoUsuario.professor},
+    {"nome": "Admin Teste", "email": "admin@teste.com", "tipo": TipoUsuario.admin},
+]
+
 
 def carregar_dados_iniciais():
     with Session(engine) as session:
@@ -63,16 +70,9 @@ def carregar_dados_iniciais():
             for dados in TERMOS:
                 session.add(TermoGlossario(**dados))
 
-        # usuário provisório, até existir a tela de login
-        if not session.exec(select(Usuario)).first():
-            session.add(
-                Usuario(
-                    nome="Aluno Teste",
-                    email="aluno@teste.com",
-                    senha_hash=gerar_hash("123456"),
-                    tipo=TipoUsuario.aluno,
-                    ano_escolar="8º ano",
-                )
-            )
+        for dados in USUARIOS:
+            existe = session.exec(select(Usuario).where(Usuario.email == dados["email"])).first()
+            if not existe:
+                session.add(Usuario(**dados, senha_hash=gerar_hash("123456")))
 
         session.commit()

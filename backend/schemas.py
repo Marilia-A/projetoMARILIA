@@ -61,6 +61,11 @@ class UsuarioLer(UsuarioBase):
     id: int
 
 
+class LoginDados(SQLModel):
+    email: str
+    senha: str
+
+
 class ProgressoAtualizar(SQLModel):
     status: StatusProgresso
 

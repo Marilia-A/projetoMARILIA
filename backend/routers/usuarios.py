@@ -4,8 +4,8 @@ from sqlmodel import Session, select
 
 from backend.database import get_session
 from backend.models import TipoUsuario, Usuario
-from backend.schemas import UsuarioCriar, UsuarioLer
-from backend.seguranca import gerar_hash
+from backend.schemas import LoginDados, UsuarioCriar, UsuarioLer
+from backend.seguranca import gerar_hash, verificar_senha
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
@@ -30,6 +30,14 @@ def criar_usuario(dados: UsuarioCriar, session: Session = Depends(get_session)):
         session.rollback()
         raise HTTPException(status_code=409, detail="E-mail já cadastrado")
     session.refresh(usuario)
+    return usuario
+
+
+@router.post("/login", response_model=UsuarioLer)
+def login(dados: LoginDados, session: Session = Depends(get_session)):
+    usuario = session.exec(select(Usuario).where(Usuario.email == dados.email.strip())).first()
+    if not usuario or not verificar_senha(dados.senha, usuario.senha_hash):
+        raise HTTPException(status_code=401, detail="E-mail ou senha inválidos")
     return usuario
 
 
