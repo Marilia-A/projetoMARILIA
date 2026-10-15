@@ -13,8 +13,8 @@ def main(page: ft.Page):
     seletor_arquivos = ft.FilePicker()
     page.services.append(seletor_arquivos)
 
-    def buscar(caminho):
-        resposta = httpx.get(f"{API}{caminho}", timeout=10)
+    def buscar(caminho, params=None):
+        resposta = httpx.get(f"{API}{caminho}", params=params, timeout=10)
         resposta.raise_for_status()
         return resposta.json()
 
@@ -28,38 +28,123 @@ def main(page: ft.Page):
     def imagem(caminho, altura=250):
         return ft.Image(src=f"{API}/imagens/{caminho}", height=altura)
 
-    def tela_lista(e=None):
-        cabecalho = ft.Row(
+    def barra_busca(rotulo, ao_buscar):
+        campo = ft.TextField(
+            label=rotulo,
+            prefix_icon=ft.Icons.SEARCH,
+            expand=True,
+            on_submit=lambda e: ao_buscar(),
+        )
+
+        def limpar(e):
+            campo.value = ""
+            ao_buscar()
+
+        linha = ft.Row(
             [
-                titulo("Roteiros"),
-                ft.IconButton(icon=ft.Icons.REFRESH, on_click=tela_lista),
-                ft.OutlinedButton(
-                    "Gerenciar roteiros", icon=ft.Icons.SETTINGS, on_click=tela_gerenciar
-                ),
+                campo,
+                ft.FilledButton("Buscar", on_click=lambda e: ao_buscar()),
+                ft.IconButton(icon=ft.Icons.CLEAR, tooltip="Limpar busca", on_click=limpar),
             ]
         )
-        try:
-            roteiros = buscar("/roteiros")
-        except httpx.HTTPError:
-            mostrar(cabecalho, ft.Text("Não foi possível conectar ao servidor."))
-            return
+        return linha, campo
 
-        if not roteiros:
-            mostrar(cabecalho, ft.Text("Nenhum roteiro cadastrado."))
-            return
+    def tela_lista(e=None):
+        resultados = ft.Column()
 
-        cartoes = [
-            ft.Card(
-                content=ft.ListTile(
-                    leading=ft.Icon(ft.Icons.MEMORY),
-                    title=ft.Text(r["titulo"], weight=ft.FontWeight.BOLD),
-                    subtitle=ft.Text(r["descricao"]),
-                    on_click=lambda e, rid=r["id"]: tela_roteiro(rid),
-                )
-            )
-            for r in roteiros
-        ]
-        mostrar(cabecalho, *cartoes)
+        def carregar():
+            texto = (campo_busca.value or "").strip()
+            try:
+                roteiros = buscar("/roteiros", {"busca": texto} if texto else None)
+            except httpx.HTTPError:
+                resultados.controls = [ft.Text("Não foi possível conectar ao servidor.")]
+                page.update()
+                return
+
+            if not roteiros:
+                resultados.controls = [
+                    ft.Text("Nenhum roteiro encontrado." if texto else "Nenhum roteiro cadastrado.")
+                ]
+            else:
+                resultados.controls = [
+                    ft.Card(
+                        content=ft.ListTile(
+                            leading=ft.Icon(ft.Icons.MEMORY),
+                            title=ft.Text(r["titulo"], weight=ft.FontWeight.BOLD),
+                            subtitle=ft.Text(r["descricao"]),
+                            on_click=lambda e, rid=r["id"]: tela_roteiro(rid),
+                        )
+                    )
+                    for r in roteiros
+                ]
+            page.update()
+
+        linha_busca, campo_busca = barra_busca("Buscar roteiro por palavra-chave", carregar)
+
+        mostrar(
+            ft.Row(
+                [
+                    titulo("Roteiros"),
+                    ft.IconButton(icon=ft.Icons.REFRESH, on_click=lambda e: carregar()),
+                    ft.OutlinedButton(
+                        "Glossário", icon=ft.Icons.MENU_BOOK, on_click=tela_glossario
+                    ),
+                    ft.OutlinedButton(
+                        "Gerenciar roteiros", icon=ft.Icons.SETTINGS, on_click=tela_gerenciar
+                    ),
+                ]
+            ),
+            linha_busca,
+            resultados,
+        )
+        carregar()
+
+    def tela_glossario(e=None):
+        resultados = ft.Column()
+
+        def carregar():
+            texto = (campo_busca.value or "").strip()
+            try:
+                termos = buscar("/glossario", {"busca": texto} if texto else None)
+            except httpx.HTTPError:
+                resultados.controls = [ft.Text("Não foi possível conectar ao servidor.")]
+                page.update()
+                return
+
+            if not termos:
+                resultados.controls = [
+                    ft.Text("Nenhum termo encontrado." if texto else "Nenhum termo cadastrado.")
+                ]
+            else:
+                cartoes = []
+                for t in termos:
+                    conteudo = [
+                        ft.Text(t["nome"], size=18, weight=ft.FontWeight.BOLD),
+                        ft.Text(t["definicao"], size=16),
+                    ]
+                    if t["imagem"]:
+                        conteudo.append(imagem(t["imagem"], altura=150))
+                    cartoes.append(
+                        ft.Card(
+                            content=ft.Container(padding=15, content=ft.Column(conteudo))
+                        )
+                    )
+                resultados.controls = cartoes
+            page.update()
+
+        linha_busca, campo_busca = barra_busca("Buscar termo", carregar)
+
+        mostrar(
+            ft.Row(
+                [
+                    ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=tela_lista),
+                    titulo("Glossário"),
+                ]
+            ),
+            linha_busca,
+            resultados,
+        )
+        carregar()
 
     def tela_roteiro(roteiro_id):
         try:
