@@ -2,7 +2,15 @@ import flet as ft
 
 import componentes
 import navegacao
-from telas import gerenciar_glossario, gerenciar_roteiros, glossario, login, roteiro, roteiros
+from telas import (
+    conquistas,
+    gerenciar_glossario,
+    gerenciar_roteiros,
+    glossario,
+    login,
+    roteiro,
+    roteiros,
+)
 
 
 def main(page: ft.Page):
@@ -19,6 +27,7 @@ def main(page: ft.Page):
             "roteiros": roteiros.mostrar,
             "roteiro": roteiro.mostrar,
             "glossario": glossario.mostrar,
+            "conquistas": conquistas.mostrar,
             "gerenciar_roteiros": gerenciar_roteiros.mostrar,
             "formulario_roteiro": gerenciar_roteiros.formulario,
             "gerenciar_glossario": gerenciar_glossario.mostrar,

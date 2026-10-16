@@ -62,6 +62,14 @@ def mostrar(page: ft.Page):
             "Glossário", icon=ft.Icons.MENU_BOOK, on_click=lambda e: navegacao.ir("glossario")
         ),
     ]
+    if eh_aluno:
+        botoes.append(
+            ft.OutlinedButton(
+                "Conquistas",
+                icon=ft.Icons.EMOJI_EVENTS,
+                on_click=lambda e: navegacao.ir("conquistas"),
+            )
+        )
     if sessao.pode_gerenciar():
         botoes.append(
             ft.OutlinedButton(

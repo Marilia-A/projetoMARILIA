@@ -6,6 +6,26 @@ import navegacao
 import sessao
 
 
+def avisar_badges(page: ft.Page, badges: list):
+    def ver_conquistas(e):
+        page.pop_dialog()
+        navegacao.ir("conquistas")
+
+    page.show_dialog(
+        ft.AlertDialog(
+            title=ft.Row([ft.Icon(ft.Icons.EMOJI_EVENTS, color=ft.Colors.AMBER), ft.Text("Nova conquista!")]),
+            content=ft.Column(
+                [ft.Text(f"{b['nome']}: {b['criterio']}", size=16) for b in badges],
+                tight=True,
+            ),
+            actions=[
+                ft.TextButton("Fechar", on_click=lambda e: page.pop_dialog()),
+                ft.FilledButton("Ver conquistas", on_click=ver_conquistas),
+            ],
+        )
+    )
+
+
 def mostrar(page: ft.Page, roteiro_id: int):
     try:
         roteiro = api.obter_roteiro(roteiro_id)
@@ -125,14 +145,18 @@ def mostrar(page: ft.Page, roteiro_id: int):
             texto_concluido.visible = concluido
 
         def concluir(e):
+            novas = []
             try:
-                api.atualizar_progresso(usuario["id"], roteiro_id, "concluido")
+                resultado = api.atualizar_progresso(usuario["id"], roteiro_id, "concluido")
                 progresso["status"] = "concluido"
+                novas = resultado.get("novas_badges", [])
                 aviso_erro.value = ""
             except api.ErroAPI as erro:
                 aviso_erro.value = erro.mensagem
             ajustar_conclusao()
             page.update()
+            if novas:
+                avisar_badges(page, novas)
 
         botao_concluir = ft.FilledButton(
             "Marcar como concluído", icon=ft.Icons.CHECK, on_click=concluir
