@@ -1,8 +1,17 @@
+from pathlib import Path
+
 from sqlmodel import Session, select
 
 from backend.database import engine
 from backend.models import Badge, Etapa, Roteiro, TermoGlossario, TipoUsuario, Usuario
 from backend.seguranca import gerar_hash
+
+PASTA_IMAGENS = Path(__file__).parent / "imagens"
+
+
+def imagem_se_existir(caminho: str | None) -> str | None:
+    return caminho if caminho and (PASTA_IMAGENS / caminho).exists() else None
+
 
 ROTEIROS = [
     {
@@ -69,7 +78,11 @@ def carregar_dados_iniciais():
         if not session.exec(select(Roteiro)).first():
             for dados in ROTEIROS:
                 campos = {k: v for k, v in dados.items() if k != "etapas"}
-                etapas = [Etapa(ordem=i, **e) for i, e in enumerate(dados["etapas"], start=1)]
+                campos["imagem"] = imagem_se_existir(campos["imagem"])
+                etapas = [
+                    Etapa(ordem=i, conteudo=e["conteudo"], imagem=imagem_se_existir(e["imagem"]))
+                    for i, e in enumerate(dados["etapas"], start=1)
+                ]
                 session.add(Roteiro(**campos, etapas=etapas))
 
         if not session.exec(select(TermoGlossario)).first():

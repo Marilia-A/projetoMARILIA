@@ -25,6 +25,10 @@ def buscar_ou_404(session: Session, usuario_id: int) -> Usuario:
     return usuario
 
 
+def tem_turmas(session: Session, usuario_id: int) -> bool:
+    return session.exec(select(Turma).where(Turma.professor_id == usuario_id)).first() is not None
+
+
 def salvar(session: Session, usuario: Usuario) -> Usuario:
     session.add(usuario)
     try:
@@ -73,6 +77,19 @@ def atualizar_usuario(
     usuario_id: int, dados: UsuarioAtualizar, session: Session = Depends(get_session)
 ):
     usuario = buscar_ou_404(session, usuario_id)
+    tipo_antigo = usuario.tipo
+
+    if tipo_antigo == TipoUsuario.professor and dados.tipo != TipoUsuario.professor:
+        if tem_turmas(session, usuario_id):
+            raise HTTPException(
+                status_code=409,
+                detail="Professor possui turmas cadastradas. Transfira ou exclua as turmas antes de mudar o tipo.",
+            )
+
+    if tipo_antigo == TipoUsuario.aluno and dados.tipo != TipoUsuario.aluno:
+        for vinculo in session.exec(select(TurmaAluno).where(TurmaAluno.aluno_id == usuario_id)).all():
+            session.delete(vinculo)
+
     for campo, valor in dados.model_dump(exclude={"senha"}).items():
         setattr(usuario, campo, valor)
     if dados.senha:
@@ -85,10 +102,8 @@ def atualizar_usuario(
 @router.delete("/{usuario_id}", status_code=204)
 def excluir_usuario(usuario_id: int, session: Session = Depends(get_session)):
     usuario = buscar_ou_404(session, usuario_id)
-    if session.exec(select(Turma).where(Turma.professor_id == usuario_id)).first():
-        raise HTTPException(
-            status_code=409, detail="Professor possui turmas cadastradas"
-        )
+    if tem_turmas(session, usuario_id):
+        raise HTTPException(status_code=409, detail="Professor possui turmas cadastradas")
 
     for modelo in (Progresso, HistoricoInteracao, AlunoBadge, TurmaAluno):
         for item in session.exec(select(modelo).where(modelo.aluno_id == usuario_id)).all():
