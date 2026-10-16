@@ -57,6 +57,10 @@ class UsuarioCriar(UsuarioBase):
     senha: str
 
 
+class UsuarioAtualizar(UsuarioBase):
+    senha: str | None = None
+
+
 class UsuarioLer(UsuarioBase):
     id: int
 

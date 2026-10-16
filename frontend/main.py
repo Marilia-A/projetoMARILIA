@@ -6,6 +6,7 @@ from telas import (
     conquistas,
     gerenciar_glossario,
     gerenciar_roteiros,
+    gerenciar_usuarios,
     glossario,
     login,
     roteiro,
@@ -32,6 +33,8 @@ def main(page: ft.Page):
             "formulario_roteiro": gerenciar_roteiros.formulario,
             "gerenciar_glossario": gerenciar_glossario.mostrar,
             "formulario_termo": gerenciar_glossario.formulario,
+            "gerenciar_usuarios": gerenciar_usuarios.mostrar,
+            "formulario_usuario": gerenciar_usuarios.formulario,
         },
     )
     navegacao.ir("login")

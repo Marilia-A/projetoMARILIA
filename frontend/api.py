@@ -35,6 +35,26 @@ def login(email: str, senha: str) -> dict:
     return _requisicao("POST", "/usuarios/login", json={"email": email, "senha": senha})
 
 
+def listar_usuarios(tipo: str | None = None) -> list:
+    return _requisicao("GET", "/usuarios", params={"tipo": tipo} if tipo else None)
+
+
+def obter_usuario(usuario_id: int) -> dict:
+    return _requisicao("GET", f"/usuarios/{usuario_id}")
+
+
+def criar_usuario(dados: dict) -> dict:
+    return _requisicao("POST", "/usuarios", json=dados)
+
+
+def atualizar_usuario(usuario_id: int, dados: dict) -> dict:
+    return _requisicao("PUT", f"/usuarios/{usuario_id}", json=dados)
+
+
+def excluir_usuario(usuario_id: int):
+    _requisicao("DELETE", f"/usuarios/{usuario_id}")
+
+
 # ---------- Roteiros ----------
 
 def listar_roteiros(busca: str | None = None) -> list:
