@@ -7,12 +7,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
 from backend.database import get_session
-from backend.models import Etapa, HistoricoInteracao, Roteiro, TipoUsuario, Usuario
+from backend.models import Etapa, HistoricoInteracao, Roteiro, Usuario
 from backend.schemas import HistoricoLer, NivelProfundidade, PerguntaTutor
 
 load_dotenv()
 
-router = APIRouter(tags=["tutor"])
+router = APIRouter(tags=["Tutor"])
 
 URL_GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent"
 TENTATIVAS = 3
@@ -96,9 +96,8 @@ def gerar_resposta(instrucoes: str, pergunta: str) -> str:
 
 @router.post("/tutor/perguntar", response_model=HistoricoLer)
 def perguntar(dados: PerguntaTutor, session: Session = Depends(get_session)):
-    aluno = session.get(Usuario, dados.aluno_id)
-    if not aluno or aluno.tipo != TipoUsuario.aluno:
-        raise HTTPException(404, "Aluno não encontrado.")
+    if not session.get(Usuario, dados.aluno_id):
+        raise HTTPException(404, "Usuário não encontrado.")
     if not dados.pergunta.strip():
         raise HTTPException(422, "A pergunta não pode ser vazia.")
 
@@ -128,7 +127,7 @@ def perguntar(dados: PerguntaTutor, session: Session = Depends(get_session)):
     return registro
 
 
-@router.get("/alunos/{aluno_id}/historico", response_model=list[HistoricoLer])
+@router.get("/alunos/{aluno_id}/historico", response_model=list[HistoricoLer], tags=["Tutor"])
 def listar_historico(
     aluno_id: int,
     roteiro_id: int | None = None,

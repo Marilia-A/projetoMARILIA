@@ -219,6 +219,11 @@ def detalhe(page: ft.Page, turma_id: int):
         page,
         ft.Row([c.botao_voltar("turmas"), c.titulo(turma["nome"])]),
         ft.Text(f'Código: {turma["codigo"]} — Professor: {turma["professor_nome"]}', size=16),
+        ft.FilledButton(
+            "Ver progresso",
+            icon=ft.Icons.INSIGHTS,
+            on_click=lambda e: navegacao.ir("dashboard", turma_id=turma_id),
+        ),
         aviso,
         ft.Text(
             f'Alunos da turma ({len(turma["alunos"])})', size=20, weight=ft.FontWeight.BOLD

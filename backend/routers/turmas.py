@@ -2,11 +2,28 @@ import secrets
 import string
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 from backend.database import get_session
-from backend.models import TipoUsuario, Turma, TurmaAluno, Usuario
-from backend.schemas import TurmaCriar, TurmaDetalhe, TurmaLer, UsuarioLer
+from backend.models import (
+    AlunoBadge,
+    HistoricoInteracao,
+    Progresso,
+    Roteiro,
+    StatusProgresso,
+    TipoUsuario,
+    Turma,
+    TurmaAluno,
+    Usuario,
+)
+from backend.schemas import (
+    DashboardTurma,
+    LinhaDashboard,
+    TurmaCriar,
+    TurmaDetalhe,
+    TurmaLer,
+    UsuarioLer,
+)
 
 router = APIRouter(prefix="/turmas", tags=["Turmas"])
 
@@ -33,26 +50,32 @@ def validar_usuario(session: Session, usuario_id: int, tipo: TipoUsuario, nome: 
     return usuario
 
 
+def contar(session: Session, modelo, *condicoes) -> int:
+    return session.exec(select(func.count()).select_from(modelo).where(*condicoes)).one()
+
+
+def alunos_da_turma(session: Session, turma_id: int) -> list[Usuario]:
+    return session.exec(
+        select(Usuario)
+        .join(TurmaAluno, TurmaAluno.aluno_id == Usuario.id)
+        .where(TurmaAluno.turma_id == turma_id)
+        .order_by(Usuario.nome)
+    ).all()
+
+
 def montar(session: Session, turma: Turma) -> TurmaLer:
     professor = session.get(Usuario, turma.professor_id)
-    total = len(session.exec(select(TurmaAluno).where(TurmaAluno.turma_id == turma.id)).all())
     return TurmaLer(
         **turma.model_dump(),
         professor_nome=professor.nome if professor else "",
-        total_alunos=total,
+        total_alunos=contar(session, TurmaAluno, TurmaAluno.turma_id == turma.id),
     )
 
 
 def montar_detalhe(session: Session, turma: Turma) -> TurmaDetalhe:
-    alunos = session.exec(
-        select(Usuario)
-        .join(TurmaAluno, TurmaAluno.aluno_id == Usuario.id)
-        .where(TurmaAluno.turma_id == turma.id)
-        .order_by(Usuario.nome)
-    ).all()
     return TurmaDetalhe(
         **montar(session, turma).model_dump(),
-        alunos=[UsuarioLer(**a.model_dump()) for a in alunos],
+        alunos=[UsuarioLer(**a.model_dump()) for a in alunos_da_turma(session, turma.id)],
     )
 
 
@@ -77,6 +100,45 @@ def listar_turmas(professor_id: int | None = None, session: Session = Depends(ge
 @router.get("/{turma_id}", response_model=TurmaDetalhe)
 def obter_turma(turma_id: int, session: Session = Depends(get_session)):
     return montar_detalhe(session, buscar_ou_404(session, turma_id))
+
+
+@router.get("/{turma_id}/dashboard", response_model=DashboardTurma)
+def dashboard_turma(turma_id: int, session: Session = Depends(get_session)):
+    turma = buscar_ou_404(session, turma_id)
+    linhas = []
+    for aluno in alunos_da_turma(session, turma_id):
+        linhas.append(
+            LinhaDashboard(
+                aluno_id=aluno.id,
+                nome=aluno.nome,
+                ano_escolar=aluno.ano_escolar,
+                concluidos=contar(
+                    session,
+                    Progresso,
+                    Progresso.aluno_id == aluno.id,
+                    Progresso.status == StatusProgresso.concluido,
+                ),
+                em_andamento=contar(
+                    session,
+                    Progresso,
+                    Progresso.aluno_id == aluno.id,
+                    Progresso.status == StatusProgresso.em_andamento,
+                ),
+                badges=contar(session, AlunoBadge, AlunoBadge.aluno_id == aluno.id),
+                perguntas=contar(
+                    session, HistoricoInteracao, HistoricoInteracao.aluno_id == aluno.id
+                ),
+            )
+        )
+    media = round(sum(l.concluidos for l in linhas) / len(linhas), 1) if linhas else 0
+    return DashboardTurma(
+        turma_id=turma.id,
+        turma_nome=turma.nome,
+        total_roteiros=contar(session, Roteiro),
+        media_concluidos=media,
+        total_perguntas=sum(l.perguntas for l in linhas),
+        alunos=linhas,
+    )
 
 
 @router.put("/{turma_id}", response_model=TurmaLer)

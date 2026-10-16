@@ -87,6 +87,10 @@ def remover_aluno_turma(turma_id: int, aluno_id: int) -> dict:
     return _requisicao("DELETE", f"/turmas/{turma_id}/alunos/{aluno_id}")
 
 
+def dashboard_turma(turma_id: int) -> dict:
+    return _requisicao("GET", f"/turmas/{turma_id}/dashboard")
+
+
 # ---------- Roteiros ----------
 
 def listar_roteiros(busca: str | None = None) -> list:
@@ -173,3 +177,7 @@ def perguntar_tutor(aluno_id: int, roteiro_id: int, nivel: str, pergunta: str) -
         },
     )
     return resposta["resposta"]
+
+
+def listar_historico(aluno_id: int) -> list:
+    return _requisicao("GET", f"/alunos/{aluno_id}/historico")

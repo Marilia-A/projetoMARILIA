@@ -88,6 +88,25 @@ class TurmaDetalhe(TurmaLer):
     alunos: list[UsuarioLer] = []
 
 
+class LinhaDashboard(SQLModel):
+    aluno_id: int
+    nome: str
+    ano_escolar: str | None = None
+    concluidos: int
+    em_andamento: int
+    badges: int
+    perguntas: int
+
+
+class DashboardTurma(SQLModel):
+    turma_id: int
+    turma_nome: str
+    total_roteiros: int
+    media_concluidos: float
+    total_perguntas: int
+    alunos: list[LinhaDashboard] = []
+
+
 class BadgeLer(SQLModel):
     id: int
     nome: str

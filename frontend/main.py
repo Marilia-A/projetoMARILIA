@@ -4,6 +4,7 @@ import componentes
 import navegacao
 from telas import (
     conquistas,
+    dashboard,
     gerenciar_glossario,
     gerenciar_roteiros,
     gerenciar_usuarios,
@@ -39,6 +40,8 @@ def main(page: ft.Page):
             "turmas": turmas.mostrar,
             "formulario_turma": turmas.formulario,
             "turma": turmas.detalhe,
+            "dashboard": dashboard.mostrar,
+            "aluno_progresso": dashboard.aluno,
         },
     )
     navegacao.ir("login")
