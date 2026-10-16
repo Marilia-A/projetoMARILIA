@@ -70,6 +70,24 @@ class LoginDados(SQLModel):
     senha: str
 
 
+class TurmaCriar(SQLModel):
+    nome: str
+    professor_id: int
+
+
+class TurmaLer(SQLModel):
+    id: int
+    nome: str
+    codigo: str
+    professor_id: int
+    professor_nome: str
+    total_alunos: int
+
+
+class TurmaDetalhe(TurmaLer):
+    alunos: list[UsuarioLer] = []
+
+
 class BadgeLer(SQLModel):
     id: int
     nome: str

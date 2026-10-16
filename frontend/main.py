@@ -11,6 +11,7 @@ from telas import (
     login,
     roteiro,
     roteiros,
+    turmas,
 )
 
 
@@ -35,6 +36,9 @@ def main(page: ft.Page):
             "formulario_termo": gerenciar_glossario.formulario,
             "gerenciar_usuarios": gerenciar_usuarios.mostrar,
             "formulario_usuario": gerenciar_usuarios.formulario,
+            "turmas": turmas.mostrar,
+            "formulario_turma": turmas.formulario,
+            "turma": turmas.detalhe,
         },
     )
     navegacao.ir("login")

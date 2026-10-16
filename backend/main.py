@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend import models  # noqa: F401
 from backend.database import criar_tabelas
-from backend.routers import glossario, progresso, roteiros, tutor, upload, usuarios
+from backend.routers import glossario, progresso, roteiros, turmas, tutor, upload, usuarios
 from backend.seed import carregar_dados_iniciais
 
 PASTA_IMAGENS = Path(__file__).parent / "imagens"
@@ -24,6 +24,7 @@ app = FastAPI(title="MARILIA API", lifespan=lifespan)
 app.include_router(roteiros.router)
 app.include_router(glossario.router)
 app.include_router(usuarios.router)
+app.include_router(turmas.router)
 app.include_router(progresso.router)
 app.include_router(tutor.router)
 app.include_router(upload.router)

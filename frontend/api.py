@@ -55,6 +55,38 @@ def excluir_usuario(usuario_id: int):
     _requisicao("DELETE", f"/usuarios/{usuario_id}")
 
 
+# ---------- Turmas ----------
+
+def listar_turmas(professor_id: int | None = None) -> list:
+    return _requisicao(
+        "GET", "/turmas", params={"professor_id": professor_id} if professor_id else None
+    )
+
+
+def obter_turma(turma_id: int) -> dict:
+    return _requisicao("GET", f"/turmas/{turma_id}")
+
+
+def criar_turma(dados: dict) -> dict:
+    return _requisicao("POST", "/turmas", json=dados)
+
+
+def atualizar_turma(turma_id: int, dados: dict) -> dict:
+    return _requisicao("PUT", f"/turmas/{turma_id}", json=dados)
+
+
+def excluir_turma(turma_id: int):
+    _requisicao("DELETE", f"/turmas/{turma_id}")
+
+
+def adicionar_aluno_turma(turma_id: int, aluno_id: int) -> dict:
+    return _requisicao("POST", f"/turmas/{turma_id}/alunos/{aluno_id}")
+
+
+def remover_aluno_turma(turma_id: int, aluno_id: int) -> dict:
+    return _requisicao("DELETE", f"/turmas/{turma_id}/alunos/{aluno_id}")
+
+
 # ---------- Roteiros ----------
 
 def listar_roteiros(busca: str | None = None) -> list:

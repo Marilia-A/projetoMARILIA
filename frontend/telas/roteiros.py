@@ -73,9 +73,22 @@ def mostrar(page: ft.Page):
     if sessao.pode_gerenciar():
         botoes.append(
             ft.OutlinedButton(
+                "Turmas", icon=ft.Icons.GROUPS, on_click=lambda e: navegacao.ir("turmas")
+            )
+        )
+        botoes.append(
+            ft.OutlinedButton(
                 "Gerenciar roteiros",
                 icon=ft.Icons.SETTINGS,
                 on_click=lambda e: navegacao.ir("gerenciar_roteiros"),
+            )
+        )
+    if sessao.eh_admin():
+        botoes.append(
+            ft.OutlinedButton(
+                "Gerenciar usuários",
+                icon=ft.Icons.PEOPLE,
+                on_click=lambda e: navegacao.ir("gerenciar_usuarios"),
             )
         )
 
