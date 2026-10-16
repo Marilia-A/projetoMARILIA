@@ -91,6 +91,7 @@ class Badge(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     nome: str
     criterio: str
+    roteiros_necessarios: int = 1
 
 
 class AlunoBadge(SQLModel, table=True):

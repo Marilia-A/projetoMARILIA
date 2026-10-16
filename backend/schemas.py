@@ -66,6 +66,18 @@ class LoginDados(SQLModel):
     senha: str
 
 
+class BadgeLer(SQLModel):
+    id: int
+    nome: str
+    criterio: str
+    roteiros_necessarios: int
+
+
+class BadgeAluno(BadgeLer):
+    conquistada: bool
+    data_conquista: datetime | None = None
+
+
 class ProgressoAtualizar(SQLModel):
     status: StatusProgresso
 
@@ -76,6 +88,10 @@ class ProgressoLer(SQLModel):
     roteiro_id: int
     status: StatusProgresso
     data_conclusao: datetime | None = None
+
+
+class ProgressoResultado(ProgressoLer):
+    novas_badges: list[BadgeLer] = []
 
 
 class NivelProfundidade(str, Enum):

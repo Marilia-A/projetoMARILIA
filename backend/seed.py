@@ -1,7 +1,7 @@
 from sqlmodel import Session, select
 
 from backend.database import engine
-from backend.models import Etapa, Roteiro, TermoGlossario, TipoUsuario, Usuario
+from backend.models import Badge, Etapa, Roteiro, TermoGlossario, TipoUsuario, Usuario
 from backend.seguranca import gerar_hash
 
 ROTEIROS = [
@@ -50,6 +50,12 @@ TERMOS = [
     },
 ]
 
+BADGES = [
+    {"nome": "Primeiro Circuito", "criterio": "Concluir o primeiro roteiro", "roteiros_necessarios": 1},
+    {"nome": "Explorador", "criterio": "Concluir 3 roteiros", "roteiros_necessarios": 3},
+    {"nome": "Inventor", "criterio": "Concluir 5 roteiros", "roteiros_necessarios": 5},
+]
+
 # usuários de teste (senha 123456)
 USUARIOS = [
     {"nome": "Aluno Teste", "email": "aluno@teste.com", "tipo": TipoUsuario.aluno, "ano_escolar": "8º ano"},
@@ -69,6 +75,10 @@ def carregar_dados_iniciais():
         if not session.exec(select(TermoGlossario)).first():
             for dados in TERMOS:
                 session.add(TermoGlossario(**dados))
+
+        if not session.exec(select(Badge)).first():
+            for dados in BADGES:
+                session.add(Badge(**dados))
 
         for dados in USUARIOS:
             existe = session.exec(select(Usuario).where(Usuario.email == dados["email"])).first()
