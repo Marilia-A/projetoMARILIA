@@ -9,6 +9,7 @@ from sqlmodel import Session, select
 from backend.database import get_session
 from backend.models import Etapa, HistoricoInteracao, Roteiro, Usuario
 from backend.schemas import HistoricoLer, NivelProfundidade, PerguntaTutor
+from backend.seguranca import exigir_proprio_ou_gerente, usuario_atual
 
 load_dotenv()
 
@@ -95,9 +96,13 @@ def gerar_resposta(instrucoes: str, pergunta: str) -> str:
 
 
 @router.post("/tutor/perguntar", response_model=HistoricoLer)
-def perguntar(dados: PerguntaTutor, session: Session = Depends(get_session)):
-    if not session.get(Usuario, dados.aluno_id):
-        raise HTTPException(404, "Usuário não encontrado.")
+def perguntar(
+    dados: PerguntaTutor,
+    session: Session = Depends(get_session),
+    usuario: Usuario = Depends(usuario_atual),
+):
+    if dados.aluno_id != usuario.id:
+        raise HTTPException(403, "Você só pode perguntar com o próprio usuário.")
     if not dados.pergunta.strip():
         raise HTTPException(422, "A pergunta não pode ser vazia.")
 
@@ -132,7 +137,9 @@ def listar_historico(
     aluno_id: int,
     roteiro_id: int | None = None,
     session: Session = Depends(get_session),
+    usuario: Usuario = Depends(usuario_atual),
 ):
+    exigir_proprio_ou_gerente(usuario, aluno_id)
     consulta = select(HistoricoInteracao).where(HistoricoInteracao.aluno_id == aluno_id)
     if roteiro_id is not None:
         consulta = consulta.where(HistoricoInteracao.roteiro_id == roteiro_id)

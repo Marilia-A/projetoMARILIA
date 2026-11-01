@@ -19,11 +19,13 @@ from backend.schemas import (
     ProgressoLer,
     ProgressoResultado,
 )
+from backend.seguranca import exigir_proprio_ou_gerente, usuario_atual
 
 router = APIRouter(prefix="/alunos/{aluno_id}")
 
 
-def validar_aluno(session: Session, aluno_id: int) -> None:
+def validar_aluno(session: Session, aluno_id: int, usuario: Usuario) -> None:
+    exigir_proprio_ou_gerente(usuario, aluno_id)
     aluno = session.get(Usuario, aluno_id)
     if not aluno or aluno.tipo != TipoUsuario.aluno:
         raise HTTPException(status_code=404, detail="Aluno não encontrado")
@@ -55,8 +57,12 @@ def conceder_badges(session: Session, aluno_id: int) -> list[BadgeLer]:
 
 
 @router.get("/progresso", response_model=list[ProgressoLer], tags=["Progresso"])
-def listar_progresso(aluno_id: int, session: Session = Depends(get_session)):
-    validar_aluno(session, aluno_id)
+def listar_progresso(
+    aluno_id: int,
+    session: Session = Depends(get_session),
+    usuario: Usuario = Depends(usuario_atual),
+):
+    validar_aluno(session, aluno_id, usuario)
     return session.exec(
         select(Progresso)
         .where(Progresso.aluno_id == aluno_id)
@@ -70,8 +76,9 @@ def atualizar_progresso(
     roteiro_id: int,
     dados: ProgressoAtualizar,
     session: Session = Depends(get_session),
+    usuario: Usuario = Depends(usuario_atual),
 ):
-    validar_aluno(session, aluno_id)
+    validar_aluno(session, aluno_id, usuario)
     if not session.get(Roteiro, roteiro_id):
         raise HTTPException(status_code=404, detail="Roteiro não encontrado")
 
@@ -95,8 +102,12 @@ def atualizar_progresso(
 
 
 @router.get("/badges", response_model=list[BadgeAluno], tags=["Badges"])
-def listar_badges(aluno_id: int, session: Session = Depends(get_session)):
-    validar_aluno(session, aluno_id)
+def listar_badges(
+    aluno_id: int,
+    session: Session = Depends(get_session),
+    usuario: Usuario = Depends(usuario_atual),
+):
+    validar_aluno(session, aluno_id, usuario)
     conquistas = {
         ab.badge_id: ab.data_conquista
         for ab in session.exec(select(AlunoBadge).where(AlunoBadge.aluno_id == aluno_id)).all()

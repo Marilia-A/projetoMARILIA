@@ -4,8 +4,11 @@ from sqlmodel import Session, col, or_, select
 from backend.database import get_session
 from backend.models import Etapa, Roteiro
 from backend.schemas import EtapaLer, RoteiroCriar, RoteiroLer, RoteiroResumo
+from backend.seguranca import gerente_atual, usuario_atual
 
-router = APIRouter(prefix="/roteiros", tags=["Roteiros"])
+router = APIRouter(
+    prefix="/roteiros", tags=["Roteiros"], dependencies=[Depends(usuario_atual)]
+)
 
 
 def buscar_ou_404(session: Session, roteiro_id: int) -> Roteiro:
@@ -25,7 +28,7 @@ def montar_resposta(session: Session, roteiro: Roteiro) -> RoteiroLer:
     )
 
 
-@router.post("", response_model=RoteiroLer, status_code=201)
+@router.post("", response_model=RoteiroLer, status_code=201, dependencies=[Depends(gerente_atual)])
 def criar_roteiro(dados: RoteiroCriar, session: Session = Depends(get_session)):
     roteiro = Roteiro(**dados.model_dump(exclude={"etapas"}))
     session.add(roteiro)
@@ -57,7 +60,7 @@ def obter_roteiro(roteiro_id: int, session: Session = Depends(get_session)):
     return montar_resposta(session, buscar_ou_404(session, roteiro_id))
 
 
-@router.put("/{roteiro_id}", response_model=RoteiroLer)
+@router.put("/{roteiro_id}", response_model=RoteiroLer, dependencies=[Depends(gerente_atual)])
 def atualizar_roteiro(
     roteiro_id: int, dados: RoteiroCriar, session: Session = Depends(get_session)
 ):
@@ -77,7 +80,7 @@ def atualizar_roteiro(
     return montar_resposta(session, roteiro)
 
 
-@router.delete("/{roteiro_id}", status_code=204)
+@router.delete("/{roteiro_id}", status_code=204, dependencies=[Depends(gerente_atual)])
 def excluir_roteiro(roteiro_id: int, session: Session = Depends(get_session)):
     session.delete(buscar_ou_404(session, roteiro_id))
     session.commit()

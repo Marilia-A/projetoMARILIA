@@ -12,8 +12,8 @@ from backend.models import (
     TurmaAluno,
     Usuario,
 )
-from backend.schemas import LoginDados, UsuarioAtualizar, UsuarioCriar, UsuarioLer
-from backend.seguranca import gerar_hash, verificar_senha
+from backend.schemas import LoginDados, LoginResposta, UsuarioAtualizar, UsuarioCriar, UsuarioLer
+from backend.seguranca import admin_atual, criar_token, gerar_hash, gerente_atual, verificar_senha
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
@@ -41,7 +41,11 @@ def salvar(session: Session, usuario: Usuario) -> Usuario:
 
 
 @router.post("", response_model=UsuarioLer, status_code=201)
-def criar_usuario(dados: UsuarioCriar, session: Session = Depends(get_session)):
+def criar_usuario(
+    dados: UsuarioCriar,
+    session: Session = Depends(get_session),
+    _: Usuario = Depends(admin_atual),
+):
     usuario = Usuario(
         **dados.model_dump(exclude={"senha"}),
         senha_hash=gerar_hash(dados.senha),
@@ -51,16 +55,20 @@ def criar_usuario(dados: UsuarioCriar, session: Session = Depends(get_session)):
     return salvar(session, usuario)
 
 
-@router.post("/login", response_model=UsuarioLer)
+@router.post("/login", response_model=LoginResposta)
 def login(dados: LoginDados, session: Session = Depends(get_session)):
     usuario = session.exec(select(Usuario).where(Usuario.email == dados.email.strip())).first()
     if not usuario or not verificar_senha(dados.senha, usuario.senha_hash):
         raise HTTPException(status_code=401, detail="E-mail ou senha inválidos")
-    return usuario
+    return LoginResposta(**usuario.model_dump(exclude={"senha_hash"}), access_token=criar_token(usuario))
 
 
 @router.get("", response_model=list[UsuarioLer])
-def listar_usuarios(tipo: TipoUsuario | None = None, session: Session = Depends(get_session)):
+def listar_usuarios(
+    tipo: TipoUsuario | None = None,
+    session: Session = Depends(get_session),
+    _: Usuario = Depends(gerente_atual),
+):
     consulta = select(Usuario)
     if tipo:
         consulta = consulta.where(Usuario.tipo == tipo)
@@ -68,13 +76,20 @@ def listar_usuarios(tipo: TipoUsuario | None = None, session: Session = Depends(
 
 
 @router.get("/{usuario_id}", response_model=UsuarioLer)
-def obter_usuario(usuario_id: int, session: Session = Depends(get_session)):
+def obter_usuario(
+    usuario_id: int,
+    session: Session = Depends(get_session),
+    _: Usuario = Depends(gerente_atual),
+):
     return buscar_ou_404(session, usuario_id)
 
 
 @router.put("/{usuario_id}", response_model=UsuarioLer)
 def atualizar_usuario(
-    usuario_id: int, dados: UsuarioAtualizar, session: Session = Depends(get_session)
+    usuario_id: int,
+    dados: UsuarioAtualizar,
+    session: Session = Depends(get_session),
+    _: Usuario = Depends(admin_atual),
 ):
     usuario = buscar_ou_404(session, usuario_id)
     tipo_antigo = usuario.tipo
@@ -100,7 +115,13 @@ def atualizar_usuario(
 
 
 @router.delete("/{usuario_id}", status_code=204)
-def excluir_usuario(usuario_id: int, session: Session = Depends(get_session)):
+def excluir_usuario(
+    usuario_id: int,
+    session: Session = Depends(get_session),
+    admin: Usuario = Depends(admin_atual),
+):
+    if usuario_id == admin.id:
+        raise HTTPException(status_code=400, detail="Você não pode excluir o próprio usuário")
     usuario = buscar_ou_404(session, usuario_id)
     if tem_turmas(session, usuario_id):
         raise HTTPException(status_code=409, detail="Professor possui turmas cadastradas")

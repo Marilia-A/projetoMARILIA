@@ -5,8 +5,11 @@ from sqlmodel import Session, col, or_, select
 from backend.database import get_session
 from backend.models import TermoGlossario
 from backend.schemas import TermoCriar, TermoLer
+from backend.seguranca import gerente_atual, usuario_atual
 
-router = APIRouter(prefix="/glossario", tags=["Glossário"])
+router = APIRouter(
+    prefix="/glossario", tags=["Glossário"], dependencies=[Depends(usuario_atual)]
+)
 
 
 def buscar_ou_404(session: Session, termo_id: int) -> TermoGlossario:
@@ -27,7 +30,7 @@ def salvar(session: Session, termo: TermoGlossario) -> TermoGlossario:
     return termo
 
 
-@router.post("", response_model=TermoLer, status_code=201)
+@router.post("", response_model=TermoLer, status_code=201, dependencies=[Depends(gerente_atual)])
 def criar_termo(dados: TermoCriar, session: Session = Depends(get_session)):
     return salvar(session, TermoGlossario(**dados.model_dump()))
 
@@ -51,7 +54,7 @@ def obter_termo(termo_id: int, session: Session = Depends(get_session)):
     return buscar_ou_404(session, termo_id)
 
 
-@router.put("/{termo_id}", response_model=TermoLer)
+@router.put("/{termo_id}", response_model=TermoLer, dependencies=[Depends(gerente_atual)])
 def atualizar_termo(
     termo_id: int, dados: TermoCriar, session: Session = Depends(get_session)
 ):
@@ -61,7 +64,7 @@ def atualizar_termo(
     return salvar(session, termo)
 
 
-@router.delete("/{termo_id}", status_code=204)
+@router.delete("/{termo_id}", status_code=204, dependencies=[Depends(gerente_atual)])
 def excluir_termo(termo_id: int, session: Session = Depends(get_session)):
     session.delete(buscar_ou_404(session, termo_id))
     session.commit()

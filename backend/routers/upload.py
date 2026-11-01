@@ -2,9 +2,11 @@ from pathlib import Path
 from typing import Literal
 from uuid import uuid4
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
-router = APIRouter(prefix="/upload", tags=["Upload"])
+from backend.seguranca import gerente_atual
+
+router = APIRouter(prefix="/upload", tags=["Upload"], dependencies=[Depends(gerente_atual)])
 
 PASTA_IMAGENS = Path(__file__).resolve().parent.parent / "imagens"
 EXTENSOES = {".jpg", ".jpeg", ".png", ".gif", ".webp"}

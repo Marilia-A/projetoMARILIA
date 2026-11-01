@@ -1,5 +1,6 @@
 import httpx
 
+import sessao
 from config import API_URL
 
 
@@ -10,9 +11,16 @@ class ErroAPI(Exception):
         self.status = status
 
 
+def _cabecalhos() -> dict:
+    u = sessao.usuario()
+    return {"Authorization": f"Bearer {u['access_token']}"} if u and u.get("access_token") else {}
+
+
 def _requisicao(metodo, caminho, timeout=10, **kwargs):
     try:
-        r = httpx.request(metodo, f"{API_URL}{caminho}", timeout=timeout, **kwargs)
+        r = httpx.request(
+            metodo, f"{API_URL}{caminho}", timeout=timeout, headers=_cabecalhos(), **kwargs
+        )
     except httpx.HTTPError:
         raise ErroAPI("Não foi possível conectar ao servidor.")
     if r.is_error:

@@ -69,6 +69,9 @@ class LoginDados(SQLModel):
     email: str
     senha: str
 
+class LoginResposta(UsuarioLer):
+    access_token: str
+    token_type: str = "bearer"
 
 class TurmaCriar(SQLModel):
     nome: str

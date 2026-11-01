@@ -24,8 +24,9 @@ from backend.schemas import (
     TurmaLer,
     UsuarioLer,
 )
+from backend.seguranca import gerente_atual
 
-router = APIRouter(prefix="/turmas", tags=["Turmas"])
+router = APIRouter(prefix="/turmas", tags=["Turmas"], dependencies=[Depends(gerente_atual)])
 
 
 def gerar_codigo(session: Session) -> str:
