@@ -84,6 +84,17 @@ def mostrar(page: ft.Page, roteiro_id: int):
         )
     )
 
+    if roteiro.get("sugestoes"):
+        paginas.append(
+            (
+                "Sugestões de experimentos",
+                [
+                    ft.Text("Agora que o roteiro funcionou, que tal experimentar?", size=16),
+                    markdown(roteiro["sugestoes"]),
+                ],
+            )
+        )
+
     nivel = ft.RadioGroup(
         value="superficial",
         content=ft.Row(

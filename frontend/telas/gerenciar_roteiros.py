@@ -74,6 +74,12 @@ def formulario(page: ft.Page, roteiro_id: int | None = None):
         min_lines=6,
         text_style=ft.TextStyle(font_family="Consolas"),
     )
+    campo_sugestoes = ft.TextField(
+        label="Sugestões de experimentos (opcional, uma por linha começando com -)",
+        value=dados.get("sugestoes") or "",
+        multiline=True,
+        min_lines=3,
+    )
     imagem_roteiro = c.seletor_imagem(page, dados.get("imagem"), "roteiros", aviso)
 
     etapas = []
@@ -144,6 +150,7 @@ def formulario(page: ft.Page, roteiro_id: int | None = None):
             "materiais": campo_materiais.value.strip(),
             "codigo_comentado": campo_codigo.value,
             "imagem": imagem_roteiro[1](),
+            "sugestoes": (campo_sugestoes.value or "").strip() or None,
             "etapas": [
                 {
                     "ordem": i,
@@ -181,6 +188,7 @@ def formulario(page: ft.Page, roteiro_id: int | None = None):
         ft.Text("Passos", size=20, weight=ft.FontWeight.BOLD),
         coluna_etapas,
         ft.OutlinedButton("Adicionar passo", icon=ft.Icons.ADD, on_click=novo_passo),
+        campo_sugestoes,
         aviso,
         ft.Row(
             [

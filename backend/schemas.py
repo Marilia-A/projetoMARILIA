@@ -24,6 +24,7 @@ class RoteiroBase(SQLModel):
     materiais: str
     codigo_comentado: str
     imagem: str | None = None
+    sugestoes: str | None = None
 
 
 class RoteiroCriar(RoteiroBase):

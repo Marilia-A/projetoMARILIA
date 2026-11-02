@@ -48,6 +48,7 @@ class Roteiro(SQLModel, table=True):
     materiais: str
     codigo_comentado: str
     imagem: str | None = None
+    sugestoes: str | None = None
 
     etapas: list["Etapa"] = Relationship(back_populates="roteiro", cascade_delete=True)
 
