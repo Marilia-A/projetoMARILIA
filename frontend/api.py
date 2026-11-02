@@ -99,6 +99,14 @@ def dashboard_turma(turma_id: int) -> dict:
     return _requisicao("GET", f"/turmas/{turma_id}/dashboard")
 
 
+def entrar_turma(codigo: str) -> dict:
+    return _requisicao("POST", "/turmas/entrar", json={"codigo": codigo})
+
+
+def minhas_turmas() -> list:
+    return _requisicao("GET", "/turmas/minhas")
+
+
 # ---------- Roteiros ----------
 
 def listar_roteiros(busca: str | None = None) -> list:

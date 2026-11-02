@@ -70,6 +70,13 @@ def mostrar(page: ft.Page):
                 on_click=lambda e: navegacao.ir("conquistas"),
             )
         )
+        botoes.append(
+            ft.OutlinedButton(
+                "Minhas turmas",
+                icon=ft.Icons.GROUPS,
+                on_click=lambda e: navegacao.ir("minhas_turmas"),
+            )
+        )
     if sessao.pode_gerenciar():
         botoes.append(
             ft.OutlinedButton(

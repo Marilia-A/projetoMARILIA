@@ -121,6 +121,10 @@ def formulario(page: ft.Page, usuario_id: int | None = None, tipo: str = "aluno"
             aviso.value = "Preencha nome, e-mail e senha."
             page.update()
             return
+        if senha and len(senha) < 6:
+            aviso.value = "A senha precisa ter pelo menos 6 caracteres."
+            page.update()
+            return
 
         corpo = {
             "nome": nome,

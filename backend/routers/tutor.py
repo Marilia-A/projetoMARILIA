@@ -16,12 +16,13 @@ load_dotenv()
 router = APIRouter(tags=["Tutor"])
 
 URL_GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent"
+URL_GROQ = "https://api.groq.com/openai/v1/chat/completions"
 TENTATIVAS = 3
 
 INSTRUCOES_NIVEL = {
     NivelProfundidade.superficial: (
-        "Dê uma explicação superficial: breve e direta, em até 4 frases curtas, com palavras "
-        "simples, só para esclarecer a dúvida pontual. Não use termos técnicos sem explicar."
+        "Dê uma explicação superficial: curta, em até 5 frases simples, com uma comparação "
+        "do dia a dia, só para esclarecer a dúvida pontual. Não use termos técnicos sem explicar."
     ),
     NivelProfundidade.moderado: (
         "Dê uma explicação moderada: um ou dois parágrafos, mostrando o raciocínio por trás "
@@ -45,6 +46,13 @@ def montar_instrucoes(nivel: NivelProfundidade, roteiro: Roteiro | None, etapas:
         "voltar ao roteiro. Não invente componentes ou passos que não existem no roteiro. "
         "Sempre lembre dos cuidados de segurança quando a dúvida envolver ligações elétricas. "
         "Guie o aluno a entender, sem apenas entregar a resposta pronta.",
+        "Jeito de explicar: fale como um professor paciente conversando com uma criança "
+        "de 10 a 12 anos. Use frases curtas, palavras do dia a dia e um tom acolhedor. "
+        "Sempre que usar um termo técnico (pino, corrente, HIGH, LOW, função), explique o "
+        "que ele significa com uma comparação do cotidiano, como um interruptor de luz, "
+        "uma torneira de água ou uma ordem dada a um robô. Prefira mostrar o que acontece "
+        "na prática (o LED acende, o LED apaga) antes de explicar a teoria. Termine com uma "
+        "pergunta curta ou um desafio simples para o aluno testar se entendeu.",
         INSTRUCOES_NIVEL[nivel],
     ]
     if roteiro:
@@ -60,32 +68,57 @@ def montar_instrucoes(nivel: NivelProfundidade, roteiro: Roteiro | None, etapas:
     return "\n\n".join(partes)
 
 
-def gerar_resposta(instrucoes: str, pergunta: str) -> str:
+def preparar_requisicao(instrucoes: str, pergunta: str):
+    provedor = os.getenv("IA_PROVEDOR", "gemini").lower()
+    if provedor == "groq":
+        chave = os.getenv("GROQ_API_KEY")
+        corpo = {
+            "model": os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
+            "messages": [
+                {"role": "system", "content": instrucoes},
+                {"role": "user", "content": pergunta},
+            ],
+            "temperature": 0.4,
+        }
+        return (
+            chave,
+            URL_GROQ,
+            {"Authorization": f"Bearer {chave}"},
+            corpo,
+            lambda d: d["choices"][0]["message"]["content"],
+        )
+
     chave = os.getenv("GEMINI_API_KEY")
     modelo = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
-    if not chave:
-        return f"[modo simulado, sem chave configurada] Você perguntou: {pergunta}"
-
     corpo = {
         "system_instruction": {"parts": [{"text": instrucoes}]},
         "contents": [{"role": "user", "parts": [{"text": pergunta}]}],
         "generationConfig": {"temperature": 0.4},
     }
+    return (
+        chave,
+        URL_GEMINI.format(modelo=modelo),
+        {"x-goog-api-key": chave},
+        corpo,
+        lambda d: d["candidates"][0]["content"]["parts"][0]["text"],
+    )
+
+
+def gerar_resposta(instrucoes: str, pergunta: str) -> str:
+    chave, url, cabecalhos, corpo, extrair = preparar_requisicao(instrucoes, pergunta)
+    if not chave:
+        return f"[modo simulado, sem chave configurada] Você perguntou: {pergunta}"
+
     for tentativa in range(TENTATIVAS):
         try:
-            r = httpx.post(
-                URL_GEMINI.format(modelo=modelo),
-                headers={"x-goog-api-key": chave},
-                json=corpo,
-                timeout=60,
-            )
+            r = httpx.post(url, headers=cabecalhos, json=corpo, timeout=60)
         except httpx.HTTPError:
             raise HTTPException(502, "Não foi possível conectar ao serviço de IA.")
 
         if r.status_code == 200:
             try:
-                return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-            except (KeyError, IndexError):
+                return extrair(r.json()).strip()
+            except (KeyError, IndexError, TypeError, AttributeError):
                 raise HTTPException(502, "O serviço de IA não retornou uma resposta.")
         if r.status_code in (429, 503) and tentativa < TENTATIVAS - 1:
             time.sleep(2 * (tentativa + 1))

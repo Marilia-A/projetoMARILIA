@@ -1,9 +1,11 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlmodel import SQLModel
+from sqlmodel import Field, SQLModel
 
 from backend.models import StatusProgresso, TipoUsuario
+
+SENHA_MINIMA = 6
 
 
 class EtapaCriar(SQLModel):
@@ -54,11 +56,11 @@ class UsuarioBase(SQLModel):
 
 
 class UsuarioCriar(UsuarioBase):
-    senha: str
+    senha: str = Field(min_length=SENHA_MINIMA)
 
 
 class UsuarioAtualizar(UsuarioBase):
-    senha: str | None = None
+    senha: str | None = Field(default=None, min_length=SENHA_MINIMA)
 
 
 class UsuarioLer(UsuarioBase):
@@ -69,14 +71,18 @@ class LoginDados(SQLModel):
     email: str
     senha: str
 
+
 class LoginResposta(UsuarioLer):
     access_token: str
     token_type: str = "bearer"
+
 
 class TurmaCriar(SQLModel):
     nome: str
     professor_id: int
 
+class EntrarTurma(SQLModel):
+    codigo: str
 
 class TurmaLer(SQLModel):
     id: int

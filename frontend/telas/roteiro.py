@@ -5,6 +5,20 @@ import componentes as c
 import navegacao
 import sessao
 
+ESTILO_CODIGO = ft.MarkdownStyleSheet(
+    code_text_style=ft.TextStyle(font_family="Consolas", size=15)
+)
+
+
+def markdown(texto: str) -> ft.Markdown:
+    return ft.Markdown(
+        texto,
+        selectable=True,
+        extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
+        code_theme=ft.MarkdownCodeTheme.ATOM_ONE_DARK,
+        code_style_sheet=ESTILO_CODIGO,
+    )
+
 
 def avisar_badges(page: ft.Page, badges: list):
     def ver_conquistas(e):
@@ -66,19 +80,7 @@ def mostrar(page: ft.Page, roteiro_id: int):
     paginas.append(
         (
             "Código",
-            [
-                ft.Container(
-                    content=ft.Text(
-                        roteiro["codigo_comentado"],
-                        font_family="Consolas",
-                        color=ft.Colors.WHITE,
-                        selectable=True,
-                    ),
-                    bgcolor=ft.Colors.BLACK,
-                    padding=15,
-                    border_radius=8,
-                )
-            ],
+            [markdown(f"```cpp\n{roteiro['codigo_comentado'].strip()}\n```")],
         )
     )
 
@@ -99,11 +101,7 @@ def mostrar(page: ft.Page, roteiro_id: int):
         max_lines=5,
     )
     carregando = ft.ProgressRing(width=24, height=24, visible=False)
-    resposta_tutor = ft.Markdown(
-        "",
-        selectable=True,
-        extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
-    )
+    resposta_tutor = markdown("")
 
     def perguntar(e):
         texto = (campo_pergunta.value or "").strip()

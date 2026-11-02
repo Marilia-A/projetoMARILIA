@@ -129,6 +129,7 @@ def excluir_usuario(
     for modelo in (Progresso, HistoricoInteracao, AlunoBadge, TurmaAluno):
         for item in session.exec(select(modelo).where(modelo.aluno_id == usuario_id)).all():
             session.delete(item)
+    session.flush()
 
     session.delete(usuario)
     session.commit()

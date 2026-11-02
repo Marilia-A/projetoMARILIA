@@ -18,15 +18,17 @@ from backend.models import (
 )
 from backend.schemas import (
     DashboardTurma,
+    EntrarTurma,
     LinhaDashboard,
     TurmaCriar,
     TurmaDetalhe,
     TurmaLer,
     UsuarioLer,
 )
-from backend.seguranca import gerente_atual
+from backend.seguranca import gerente_atual, usuario_atual
 
 router = APIRouter(prefix="/turmas", tags=["Turmas"], dependencies=[Depends(gerente_atual)])
+router_aluno = APIRouter(prefix="/turmas", tags=["Turmas"])
 
 
 def gerar_codigo(session: Session) -> str:
@@ -159,6 +161,7 @@ def excluir_turma(turma_id: int, session: Session = Depends(get_session)):
     turma = buscar_ou_404(session, turma_id)
     for vinculo in session.exec(select(TurmaAluno).where(TurmaAluno.turma_id == turma_id)).all():
         session.delete(vinculo)
+    session.flush()
     session.delete(turma)
     session.commit()
 
@@ -183,3 +186,37 @@ def remover_aluno(turma_id: int, aluno_id: int, session: Session = Depends(get_s
     session.delete(vinculo)
     session.commit()
     return montar_detalhe(session, turma)
+
+
+def exigir_aluno(usuario: Usuario = Depends(usuario_atual)) -> Usuario:
+    if usuario.tipo != TipoUsuario.aluno:
+        raise HTTPException(status_code=403, detail="Somente alunos entram em turmas pelo código")
+    return usuario
+
+
+@router_aluno.post("/entrar", response_model=TurmaLer)
+def entrar_por_codigo(
+    dados: EntrarTurma,
+    session: Session = Depends(get_session),
+    aluno: Usuario = Depends(exigir_aluno),
+):
+    codigo = dados.codigo.strip().upper()
+    turma = session.exec(select(Turma).where(Turma.codigo == codigo)).first()
+    if not turma:
+        raise HTTPException(status_code=404, detail="Código de turma não encontrado")
+    if session.get(TurmaAluno, (turma.id, aluno.id)):
+        raise HTTPException(status_code=409, detail="Você já está nesta turma")
+    session.add(TurmaAluno(turma_id=turma.id, aluno_id=aluno.id))
+    session.commit()
+    return montar(session, turma)
+
+
+@router_aluno.get("/minhas", response_model=list[TurmaLer])
+def minhas_turmas(session: Session = Depends(get_session), aluno: Usuario = Depends(exigir_aluno)):
+    turmas = session.exec(
+        select(Turma)
+        .join(TurmaAluno, TurmaAluno.turma_id == Turma.id)
+        .where(TurmaAluno.aluno_id == aluno.id)
+        .order_by(Turma.nome)
+    ).all()
+    return [montar(session, t) for t in turmas]
