@@ -17,6 +17,18 @@ def icone_status(status):
 def mostrar(page: ft.Page):
     resultados = ft.Column()
     eh_aluno = sessao.usuario()["tipo"] == "aluno"
+    barra = ft.ProgressBar(value=0, width=400, color=ft.Colors.GREEN)
+    texto_barra = ft.Text(size=16)
+    painel_progresso = ft.Column([texto_barra, barra], visible=eh_aluno)
+
+    def atualizar_barra(progresso: dict):
+        try:
+            total = len(api.listar_roteiros())
+        except api.ErroAPI:
+            return
+        concluidos = sum(1 for s in progresso.values() if s == "concluido")
+        barra.value = concluidos / total if total else 0
+        texto_barra.value = f"Seu progresso: {concluidos} de {total} roteiros concluídos"
 
     def carregar():
         texto = (campo_busca.value or "").strip()
@@ -33,6 +45,7 @@ def mostrar(page: ft.Page):
                 progresso = api.listar_progresso(sessao.usuario()["id"])
             except api.ErroAPI:
                 pass
+            atualizar_barra(progresso)
 
         if not roteiros:
             resultados.controls = [
@@ -110,6 +123,7 @@ def mostrar(page: ft.Page):
                 ),
             ]
         ),
+        painel_progresso,
         linha_busca,
         resultados,
     )
