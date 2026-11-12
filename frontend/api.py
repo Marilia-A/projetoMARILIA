@@ -17,7 +17,7 @@ def _cabecalhos() -> dict:
     return {"Authorization": f"Bearer {u['access_token']}"} if u and u.get("access_token") else {}
 
 
-def _requisicao(metodo, caminho, timeout=10, **kwargs):
+def _requisicao(metodo, caminho, timeout=60, **kwargs):
     try:
         r = httpx.request(
             metodo, f"{API_URL}{caminho}", timeout=timeout, headers=_cabecalhos(), **kwargs
@@ -44,7 +44,7 @@ def url_imagem(caminho: str) -> str:
 # ---------- Usuários ----------
 
 def login(email: str, senha: str) -> dict:
-    return _requisicao("POST", "/usuarios/login", json={"email": email, "senha": senha})
+    return _requisicao("POST", "/usuarios/login", timeout=90, json={"email": email, "senha": senha})
 
 
 def listar_usuarios(tipo: str | None = None) -> list:
