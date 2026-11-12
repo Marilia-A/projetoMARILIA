@@ -1,6 +1,10 @@
 _estado = {"usuario": None}
 
 
+class SessaoExpirada(Exception):
+    pass
+
+
 def entrar(usuario: dict):
     _estado["usuario"] = usuario
 

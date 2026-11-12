@@ -1,3 +1,5 @@
+import sessao
+
 _estado = {"page": None, "telas": {}}
 
 
@@ -7,4 +9,7 @@ def configurar(page, telas: dict):
 
 
 def ir(nome: str, **params):
-    _estado["telas"][nome](_estado["page"], **params)
+    try:
+        _estado["telas"][nome](_estado["page"], **params)
+    except sessao.SessaoExpirada:
+        pass
