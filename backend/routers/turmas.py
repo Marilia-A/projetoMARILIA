@@ -46,6 +46,18 @@ def buscar_ou_404(session: Session, turma_id: int) -> Turma:
     return turma
 
 
+def turma_permitida(session: Session, turma_id: int, usuario: Usuario) -> Turma:
+    turma = buscar_ou_404(session, turma_id)
+    if usuario.tipo != TipoUsuario.admin and turma.professor_id != usuario.id:
+        raise HTTPException(status_code=403, detail="Esta turma pertence a outro professor")
+    return turma
+
+
+def exigir_professor_proprio(usuario: Usuario, professor_id: int):
+    if usuario.tipo != TipoUsuario.admin and professor_id != usuario.id:
+        raise HTTPException(status_code=403, detail="Professor só gerencia as próprias turmas")
+
+
 def validar_usuario(session: Session, usuario_id: int, tipo: TipoUsuario, nome: str) -> Usuario:
     usuario = session.get(Usuario, usuario_id)
     if not usuario or usuario.tipo != tipo:
@@ -83,7 +95,12 @@ def montar_detalhe(session: Session, turma: Turma) -> TurmaDetalhe:
 
 
 @router.post("", response_model=TurmaLer, status_code=201)
-def criar_turma(dados: TurmaCriar, session: Session = Depends(get_session)):
+def criar_turma(
+    dados: TurmaCriar,
+    session: Session = Depends(get_session),
+    usuario: Usuario = Depends(gerente_atual),
+):
+    exigir_professor_proprio(usuario, dados.professor_id)
     validar_usuario(session, dados.professor_id, TipoUsuario.professor, "Professor")
     turma = Turma(nome=dados.nome, professor_id=dados.professor_id, codigo=gerar_codigo(session))
     session.add(turma)
@@ -93,7 +110,13 @@ def criar_turma(dados: TurmaCriar, session: Session = Depends(get_session)):
 
 
 @router.get("", response_model=list[TurmaLer])
-def listar_turmas(professor_id: int | None = None, session: Session = Depends(get_session)):
+def listar_turmas(
+    professor_id: int | None = None,
+    session: Session = Depends(get_session),
+    usuario: Usuario = Depends(gerente_atual),
+):
+    if usuario.tipo != TipoUsuario.admin:
+        professor_id = usuario.id
     consulta = select(Turma)
     if professor_id:
         consulta = consulta.where(Turma.professor_id == professor_id)
@@ -101,13 +124,21 @@ def listar_turmas(professor_id: int | None = None, session: Session = Depends(ge
 
 
 @router.get("/{turma_id}", response_model=TurmaDetalhe)
-def obter_turma(turma_id: int, session: Session = Depends(get_session)):
-    return montar_detalhe(session, buscar_ou_404(session, turma_id))
+def obter_turma(
+    turma_id: int,
+    session: Session = Depends(get_session),
+    usuario: Usuario = Depends(gerente_atual),
+):
+    return montar_detalhe(session, turma_permitida(session, turma_id, usuario))
 
 
 @router.get("/{turma_id}/dashboard", response_model=DashboardTurma)
-def dashboard_turma(turma_id: int, session: Session = Depends(get_session)):
-    turma = buscar_ou_404(session, turma_id)
+def dashboard_turma(
+    turma_id: int,
+    session: Session = Depends(get_session),
+    usuario: Usuario = Depends(gerente_atual),
+):
+    turma = turma_permitida(session, turma_id, usuario)
     linhas = []
     for aluno in alunos_da_turma(session, turma_id):
         linhas.append(
@@ -145,8 +176,14 @@ def dashboard_turma(turma_id: int, session: Session = Depends(get_session)):
 
 
 @router.put("/{turma_id}", response_model=TurmaLer)
-def atualizar_turma(turma_id: int, dados: TurmaCriar, session: Session = Depends(get_session)):
-    turma = buscar_ou_404(session, turma_id)
+def atualizar_turma(
+    turma_id: int,
+    dados: TurmaCriar,
+    session: Session = Depends(get_session),
+    usuario: Usuario = Depends(gerente_atual),
+):
+    turma = turma_permitida(session, turma_id, usuario)
+    exigir_professor_proprio(usuario, dados.professor_id)
     validar_usuario(session, dados.professor_id, TipoUsuario.professor, "Professor")
     turma.nome = dados.nome
     turma.professor_id = dados.professor_id
@@ -157,8 +194,12 @@ def atualizar_turma(turma_id: int, dados: TurmaCriar, session: Session = Depends
 
 
 @router.delete("/{turma_id}", status_code=204)
-def excluir_turma(turma_id: int, session: Session = Depends(get_session)):
-    turma = buscar_ou_404(session, turma_id)
+def excluir_turma(
+    turma_id: int,
+    session: Session = Depends(get_session),
+    usuario: Usuario = Depends(gerente_atual),
+):
+    turma = turma_permitida(session, turma_id, usuario)
     for vinculo in session.exec(select(TurmaAluno).where(TurmaAluno.turma_id == turma_id)).all():
         session.delete(vinculo)
     session.flush()
@@ -167,8 +208,13 @@ def excluir_turma(turma_id: int, session: Session = Depends(get_session)):
 
 
 @router.post("/{turma_id}/alunos/{aluno_id}", response_model=TurmaDetalhe)
-def adicionar_aluno(turma_id: int, aluno_id: int, session: Session = Depends(get_session)):
-    turma = buscar_ou_404(session, turma_id)
+def adicionar_aluno(
+    turma_id: int,
+    aluno_id: int,
+    session: Session = Depends(get_session),
+    usuario: Usuario = Depends(gerente_atual),
+):
+    turma = turma_permitida(session, turma_id, usuario)
     validar_usuario(session, aluno_id, TipoUsuario.aluno, "Aluno")
     if session.get(TurmaAluno, (turma_id, aluno_id)):
         raise HTTPException(status_code=409, detail="Aluno já está na turma")
@@ -178,8 +224,13 @@ def adicionar_aluno(turma_id: int, aluno_id: int, session: Session = Depends(get
 
 
 @router.delete("/{turma_id}/alunos/{aluno_id}", response_model=TurmaDetalhe)
-def remover_aluno(turma_id: int, aluno_id: int, session: Session = Depends(get_session)):
-    turma = buscar_ou_404(session, turma_id)
+def remover_aluno(
+    turma_id: int,
+    aluno_id: int,
+    session: Session = Depends(get_session),
+    usuario: Usuario = Depends(gerente_atual),
+):
+    turma = turma_permitida(session, turma_id, usuario)
     vinculo = session.get(TurmaAluno, (turma_id, aluno_id))
     if not vinculo:
         raise HTTPException(status_code=404, detail="Aluno não está na turma")
