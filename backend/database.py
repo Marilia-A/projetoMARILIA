@@ -6,6 +6,9 @@ from sqlmodel import SQLModel, Session, create_engine
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./marilia.db")
+for prefixo in ("postgres://", "postgresql://"):
+    if DATABASE_URL.startswith(prefixo):
+        DATABASE_URL = "postgresql+psycopg://" + DATABASE_URL[len(prefixo):]
 
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
