@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 from backend.database import get_session
 from backend.models import (
@@ -30,6 +30,7 @@ def tem_turmas(session: Session, usuario_id: int) -> bool:
 
 
 def salvar(session: Session, usuario: Usuario) -> Usuario:
+    usuario.email = usuario.email.strip().lower()
     session.add(usuario)
     try:
         session.commit()
@@ -57,7 +58,7 @@ def criar_usuario(
 
 @router.post("/login", response_model=LoginResposta)
 def login(dados: LoginDados, session: Session = Depends(get_session)):
-    usuario = session.exec(select(Usuario).where(Usuario.email == dados.email.strip())).first()
+    usuario = session.exec(select(Usuario).where(func.lower(Usuario.email) == dados.email.strip().lower())).first()
     if not usuario or not verificar_senha(dados.senha, usuario.senha_hash):
         raise HTTPException(status_code=401, detail="E-mail ou senha inválidos")
     return LoginResposta(**usuario.model_dump(exclude={"senha_hash"}), access_token=criar_token(usuario))

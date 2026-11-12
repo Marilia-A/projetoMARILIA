@@ -16,7 +16,9 @@ from backend.models import TipoUsuario, Usuario
 load_dotenv()
 
 ITERACOES = 600_000
-JWT_SECRET = os.getenv("JWT_SECRET", "troque-esta-chave")
+JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET:
+    raise RuntimeError("Defina JWT_SECRET no .env")
 JWT_ALGORITMO = "HS256"
 HORAS_VALIDADE = 8
 
