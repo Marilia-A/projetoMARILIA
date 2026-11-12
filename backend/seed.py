@@ -404,4 +404,18 @@ def carregar_dados_iniciais():
                 if not existe:
                     session.add(Usuario(**dados, senha_hash=gerar_hash("123456")))
 
+        email_admin = (os.getenv("ADMIN_EMAIL") or "").strip().lower()
+        senha_admin = os.getenv("ADMIN_SENHA") or ""
+        if email_admin and senha_admin:
+            existe = session.exec(select(Usuario).where(Usuario.email == email_admin)).first()
+            if not existe:
+                session.add(
+                    Usuario(
+                        nome="Administrador",
+                        email=email_admin,
+                        tipo=TipoUsuario.admin,
+                        senha_hash=gerar_hash(senha_admin),
+                    )
+                )
+
         session.commit()
