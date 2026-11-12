@@ -1,0 +1,13 @@
+name: Manter API acordada
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar a API
+        run: curl -fsS --max-time 90 "${{ vars.MARILIA_API_URL }}/" || true
