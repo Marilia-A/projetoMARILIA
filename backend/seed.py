@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 
 from backend.database import engine
 from backend.models import Badge, Etapa, Roteiro, TermoGlossario, TipoUsuario, Usuario
-from backend.seguranca import gerar_hash
+from backend.seguranca import gerar_hash, verificar_senha
 
 PASTA_IMAGENS = Path(__file__).parent / "imagens"
 
@@ -417,5 +417,10 @@ def carregar_dados_iniciais():
                         senha_hash=gerar_hash(senha_admin),
                     )
                 )
+            else:
+                existe.tipo = TipoUsuario.admin
+                if not verificar_senha(senha_admin, existe.senha_hash):
+                    existe.senha_hash = gerar_hash(senha_admin)
+                session.add(existe)
 
         session.commit()
