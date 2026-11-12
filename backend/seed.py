@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from sqlmodel import Session, select
@@ -397,9 +398,10 @@ def carregar_dados_iniciais():
             for dados in BADGES:
                 session.add(Badge(**dados))
 
-        for dados in USUARIOS:
-            existe = session.exec(select(Usuario).where(Usuario.email == dados["email"])).first()
-            if not existe:
-                session.add(Usuario(**dados, senha_hash=gerar_hash("123456")))
+        if os.getenv("SEED_USUARIOS_TESTE", "true").lower() == "true":
+            for dados in USUARIOS:
+                existe = session.exec(select(Usuario).where(Usuario.email == dados["email"])).first()
+                if not existe:
+                    session.add(Usuario(**dados, senha_hash=gerar_hash("123456")))
 
         session.commit()
