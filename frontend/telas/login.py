@@ -6,7 +6,7 @@ import navegacao
 import sessao
 
 
-def mostrar(page: ft.Page):
+def mostrar(page: ft.Page, aviso: str | None = None):
     sessao.sair()
 
     campo_email = ft.TextField(label="E-mail", width=400, prefix_icon=ft.Icons.EMAIL)
@@ -17,7 +17,10 @@ def mostrar(page: ft.Page):
         can_reveal_password=True,
         prefix_icon=ft.Icons.LOCK,
     )
+    mensagem = aviso
     aviso = c.aviso_erro()
+    if mensagem:
+        aviso.value = mensagem
 
     def entrar(e):
         email = (campo_email.value or "").strip()

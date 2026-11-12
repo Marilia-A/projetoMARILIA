@@ -1,5 +1,6 @@
 import httpx
 
+import navegacao
 import sessao
 from config import API_URL
 
@@ -23,6 +24,9 @@ def _requisicao(metodo, caminho, timeout=10, **kwargs):
         )
     except httpx.HTTPError:
         raise ErroAPI("Não foi possível conectar ao servidor.")
+    if r.status_code == 401 and sessao.usuario() and caminho != "/usuarios/login":
+        navegacao.ir("login", aviso="Sua sessão expirou. Entre novamente.")
+        raise sessao.SessaoExpirada()
     if r.is_error:
         try:
             detalhe = r.json().get("detail")
