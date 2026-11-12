@@ -1,5 +1,6 @@
 import httpx
 
+import navegacao
 import sessao
 from config import API_URL
 
@@ -16,13 +17,16 @@ def _cabecalhos() -> dict:
     return {"Authorization": f"Bearer {u['access_token']}"} if u and u.get("access_token") else {}
 
 
-def _requisicao(metodo, caminho, timeout=10, **kwargs):
+def _requisicao(metodo, caminho, timeout=60, **kwargs):
     try:
         r = httpx.request(
             metodo, f"{API_URL}{caminho}", timeout=timeout, headers=_cabecalhos(), **kwargs
         )
     except httpx.HTTPError:
         raise ErroAPI("Não foi possível conectar ao servidor.")
+    if r.status_code == 401 and sessao.usuario() and caminho != "/usuarios/login":
+        navegacao.ir("login", aviso="Sua sessão expirou. Entre novamente.")
+        raise sessao.SessaoExpirada()
     if r.is_error:
         try:
             detalhe = r.json().get("detail")
@@ -40,7 +44,7 @@ def url_imagem(caminho: str) -> str:
 # ---------- Usuários ----------
 
 def login(email: str, senha: str) -> dict:
-    return _requisicao("POST", "/usuarios/login", json={"email": email, "senha": senha})
+    return _requisicao("POST", "/usuarios/login", timeout=90, json={"email": email, "senha": senha})
 
 
 def listar_usuarios(tipo: str | None = None) -> list:
