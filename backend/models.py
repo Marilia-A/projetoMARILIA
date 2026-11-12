@@ -95,6 +95,12 @@ class Badge(SQLModel, table=True):
     roteiros_necessarios: int = 1
 
 
+class Imagem(SQLModel, table=True):
+    caminho: str = Field(primary_key=True)
+    conteudo: bytes
+    tipo: str
+
+
 class AlunoBadge(SQLModel, table=True):
     aluno_id: int = Field(foreign_key="usuario.id", primary_key=True)
     badge_id: int = Field(foreign_key="badge.id", primary_key=True)
