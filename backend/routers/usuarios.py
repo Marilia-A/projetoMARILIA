@@ -29,6 +29,15 @@ def tem_turmas(session: Session, usuario_id: int) -> bool:
     return session.exec(select(Turma).where(Turma.professor_id == usuario_id)).first() is not None
 
 
+def aluno_do_professor(session: Session, aluno_id: int, professor_id: int) -> bool:
+    consulta = (
+        select(TurmaAluno)
+        .join(Turma, Turma.id == TurmaAluno.turma_id)
+        .where(TurmaAluno.aluno_id == aluno_id, Turma.professor_id == professor_id)
+    )
+    return session.exec(consulta).first() is not None
+
+
 def salvar(session: Session, usuario: Usuario) -> Usuario:
     usuario.email = usuario.email.strip().lower()
     session.add(usuario)
@@ -68,8 +77,10 @@ def login(dados: LoginDados, session: Session = Depends(get_session)):
 def listar_usuarios(
     tipo: TipoUsuario | None = None,
     session: Session = Depends(get_session),
-    _: Usuario = Depends(gerente_atual),
+    usuario: Usuario = Depends(gerente_atual),
 ):
+    if usuario.tipo != TipoUsuario.admin:
+        tipo = TipoUsuario.aluno
     consulta = select(Usuario)
     if tipo:
         consulta = consulta.where(Usuario.tipo == tipo)
@@ -80,9 +91,12 @@ def listar_usuarios(
 def obter_usuario(
     usuario_id: int,
     session: Session = Depends(get_session),
-    _: Usuario = Depends(gerente_atual),
+    usuario: Usuario = Depends(gerente_atual),
 ):
-    return buscar_ou_404(session, usuario_id)
+    encontrado = buscar_ou_404(session, usuario_id)
+    if usuario.tipo != TipoUsuario.admin and not aluno_do_professor(session, usuario_id, usuario.id):
+        raise HTTPException(status_code=403, detail="Professor só acessa alunos das próprias turmas")
+    return encontrado
 
 
 @router.put("/{usuario_id}", response_model=UsuarioLer)
