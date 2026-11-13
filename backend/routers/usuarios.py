@@ -1,3 +1,6 @@
+import time
+from collections import defaultdict, deque
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, func, select
@@ -16,6 +19,19 @@ from backend.schemas import LoginDados, LoginResposta, UsuarioAtualizar, Usuario
 from backend.seguranca import admin_atual, criar_token, gerar_hash, gerente_atual, verificar_senha
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
+
+# Limite de tentativas de login (por e-mail, em memória: basta para um único servidor)
+TENTATIVAS_LOGIN = 5
+JANELA_LOGIN = 15 * 60  # segundos
+_falhas_login: dict[str, deque] = defaultdict(deque)
+
+
+def _falhas_recentes(email: str) -> deque:
+    falhas = _falhas_login[email]
+    agora = time.monotonic()
+    while falhas and agora - falhas[0] > JANELA_LOGIN:
+        falhas.popleft()
+    return falhas
 
 
 def buscar_ou_404(session: Session, usuario_id: int) -> Usuario:
@@ -67,9 +83,19 @@ def criar_usuario(
 
 @router.post("/login", response_model=LoginResposta)
 def login(dados: LoginDados, session: Session = Depends(get_session)):
-    usuario = session.exec(select(Usuario).where(func.lower(Usuario.email) == dados.email.strip().lower())).first()
+    email = dados.email.strip().lower()
+    falhas = _falhas_recentes(email)
+    if len(falhas) >= TENTATIVAS_LOGIN:
+        minutos = max(1, round((JANELA_LOGIN - (time.monotonic() - falhas[0])) / 60))
+        raise HTTPException(
+            status_code=429,
+            detail=f"Muitas tentativas de login. Aguarde {minutos} minuto(s) e tente de novo.",
+        )
+    usuario = session.exec(select(Usuario).where(func.lower(Usuario.email) == email)).first()
     if not usuario or not verificar_senha(dados.senha, usuario.senha_hash):
+        falhas.append(time.monotonic())
         raise HTTPException(status_code=401, detail="E-mail ou senha inválidos")
+    _falhas_login.pop(email, None)
     return LoginResposta(**usuario.model_dump(exclude={"senha_hash"}), access_token=criar_token(usuario))
 
 
@@ -94,7 +120,11 @@ def obter_usuario(
     usuario: Usuario = Depends(gerente_atual),
 ):
     encontrado = buscar_ou_404(session, usuario_id)
-    if usuario.tipo != TipoUsuario.admin and not aluno_do_professor(session, usuario_id, usuario.id):
+    if (
+        usuario.tipo != TipoUsuario.admin
+        and usuario.id != usuario_id
+        and not aluno_do_professor(session, usuario_id, usuario.id)
+    ):
         raise HTTPException(status_code=403, detail="Professor só acessa alunos das próprias turmas")
     return encontrado
 

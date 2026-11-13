@@ -18,6 +18,7 @@ router = APIRouter(tags=["Tutor"])
 URL_GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent"
 URL_GROQ = "https://api.groq.com/openai/v1/chat/completions"
 TENTATIVAS = 3
+PERGUNTA_MAXIMA = 500  # caracteres
 
 INSTRUCOES_NIVEL = {
     NivelProfundidade.superficial: (
@@ -138,6 +139,8 @@ def perguntar(
         raise HTTPException(403, "Você só pode perguntar com o próprio usuário.")
     if not dados.pergunta.strip():
         raise HTTPException(422, "A pergunta não pode ser vazia.")
+    if len(dados.pergunta) > PERGUNTA_MAXIMA:
+        raise HTTPException(422, f"A pergunta pode ter no máximo {PERGUNTA_MAXIMA} caracteres.")
 
     roteiro = None
     etapas = []

@@ -110,6 +110,7 @@ def mostrar(page: ft.Page, roteiro_id: int):
         multiline=True,
         min_lines=2,
         max_lines=5,
+        max_length=500,
     )
     carregando = ft.ProgressRing(width=24, height=24, visible=False)
     resposta_tutor = markdown("")
@@ -126,8 +127,12 @@ def mostrar(page: ft.Page, roteiro_id: int):
             resposta_tutor.value = api.perguntar_tutor(
                 usuario["id"], roteiro_id, nivel.value, texto
             )
-        except api.ErroAPI:
-            resposta_tutor.value = "Não foi possível falar com o tutor. Tente de novo."
+        except api.ErroAPI as erro:
+            resposta_tutor.value = (
+                erro.mensagem
+                if erro.status in (422, 503)
+                else "Não foi possível falar com o tutor. Tente de novo."
+            )
         botao_perguntar.disabled = False
         carregando.visible = False
         page.update()
