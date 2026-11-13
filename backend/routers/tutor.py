@@ -9,7 +9,7 @@ from sqlmodel import Session, select
 from backend.database import get_session
 from backend.models import Etapa, HistoricoInteracao, Roteiro, Usuario
 from backend.schemas import HistoricoLer, NivelProfundidade, PerguntaTutor
-from backend.seguranca import exigir_proprio_ou_gerente, usuario_atual
+from backend.seguranca import exigir_acesso_ao_aluno, usuario_atual
 
 load_dotenv()
 
@@ -172,7 +172,7 @@ def listar_historico(
     session: Session = Depends(get_session),
     usuario: Usuario = Depends(usuario_atual),
 ):
-    exigir_proprio_ou_gerente(usuario, aluno_id)
+    exigir_acesso_ao_aluno(session, usuario, aluno_id)
     consulta = select(HistoricoInteracao).where(HistoricoInteracao.aluno_id == aluno_id)
     if roteiro_id is not None:
         consulta = consulta.where(HistoricoInteracao.roteiro_id == roteiro_id)

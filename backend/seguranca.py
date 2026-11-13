@@ -8,10 +8,10 @@ import jwt
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from backend.database import get_session
-from backend.models import TipoUsuario, Usuario
+from backend.models import TipoUsuario, Turma, TurmaAluno, Usuario
 
 load_dotenv()
 
@@ -79,3 +79,16 @@ def admin_atual(usuario: Usuario = Depends(usuario_atual)) -> Usuario:
 def exigir_proprio_ou_gerente(usuario: Usuario, aluno_id: int):
     if usuario.tipo == TipoUsuario.aluno and usuario.id != aluno_id:
         raise HTTPException(status_code=403, detail="Aluno só acessa os próprios dados")
+
+
+def exigir_acesso_ao_aluno(session: Session, usuario: Usuario, aluno_id: int):
+    exigir_proprio_ou_gerente(usuario, aluno_id)
+    if usuario.tipo != TipoUsuario.professor or usuario.id == aluno_id:
+        return
+    consulta = (
+        select(TurmaAluno)
+        .join(Turma, Turma.id == TurmaAluno.turma_id)
+        .where(TurmaAluno.aluno_id == aluno_id, Turma.professor_id == usuario.id)
+    )
+    if not session.exec(consulta).first():
+        raise HTTPException(status_code=403, detail="Professor só acessa alunos das próprias turmas")
