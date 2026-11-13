@@ -13,8 +13,10 @@ Atualizado a cada etapa. (Itens de texto do TCC ficam no checklist pessoal; aqui
 |---|---|---|
 | v1.0 | `8bd3ab4` | Antes das correções da análise de código |
 | v1.1 | `970d7c3` | Blocos 1 a 3 + DATABASE_URL + admin do seed (PRs #1 a #4) |
-| v1.2 | *a criar* | Bloco 4 – front na nuvem + executável |
-| v1.3 | *a criar* | Bloco 5 – acesso do professor, upload, limites (PRs #5, #6 + commit de 13/11) |
+| v1.2 | *a criar após o merge dos PRs dos blocos 4 e 5* | Blocos 4 e 5 – front na nuvem + executável; acesso do professor, upload, limites (PRs #5, #6 e os PRs de 13/11) |
+| v1.3 | *reservada* | Próximo bloco (visual infantil / melhorias) |
+
+Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blocos já mesclados no `main`.
 
 - API no ar: `https://marilia-api.onrender.com` (Render, gratuito, região Oregon)
 - Banco: Neon (PostgreSQL gratuito, US East). PostgreSQL local para desenvolvimento.
@@ -75,17 +77,17 @@ Atualizado a cada etapa. (Itens de texto do TCC ficam no checklist pessoal; aqui
 - [x] Front aponta para a nuvem por padrão
 - [x] Script do executável
 - [ ] Gerar o `.exe` no Windows e testar (login, roteiro, tutor, dashboard)
-- [ ] PR + tag v1.2
+- [ ] PR (branch `bloco-4-front-nuvem`) + tag v1.2
 
 ### Bloco 5 – segurança e limites → tag v1.3
 - [x] Professor só acessa dados de alunos das próprias turmas (PRs #5 e #6)
 - [x] Tipo da imagem pela extensão (PR #5)
 - [x] Limite de tentativas de login
 - [x] Limite de tamanho da pergunta ao tutor
-- [ ] PR + tag v1.3
+- [ ] PR (branch `bloco-5-limites`) → entra na tag v1.2
 
 ### Bloco 6 – Documentação (READMEs para o GitHub)
-Três arquivos, cada um com o que é necessário para aquela parte:
+Três arquivos, cada um com o que é necessário para aquela parte. **Escritos em 13/11** (branch `bloco-6-documentacao`), junto com `.env.example`. Falta: sigla do MARILIA no README da raiz, prints das telas no README do front, orientação/instituição na seção Autoria.
 
 - [ ] **`README.md` (raiz)**
   - O que é o MARILIA (origem do nome, público, contexto do START e do TCC)
@@ -118,6 +120,10 @@ Três arquivos, cada um com o que é necessário para aquela parte:
   - Telas por perfil (com prints quando o visual estiver pronto)
   - Problemas comuns (sem conexão, sessão expirada, muitas tentativas de login, tutor ocupado)
 - [ ] Revisar se `requirements.txt` (front + back) e `requirements-api.txt` (só servidor) estão descritos certo.
+
+### Fluxo de trabalho
+- Um branch e um PR **separado por bloco**; tag criada só depois do merge no `main`.
+- PRs acompanhados automaticamente (comentários, revisões e CI chegam na sessão do Claude).
 
 ### Melhorias opcionais
 - [ ] Dashboard com menos consultas por aluno
