@@ -33,7 +33,7 @@ async def enviar_imagem(
         raise HTTPException(status_code=400, detail="Imagem maior que 5 MB")
 
     caminho = f"{pasta}/{uuid4().hex}{extensao}"
-    tipo = arquivo.content_type or mimetypes.guess_type(caminho)[0] or "application/octet-stream"
+    tipo = mimetypes.guess_type(caminho)[0] or "application/octet-stream"
     session.add(Imagem(caminho=caminho, conteudo=conteudo, tipo=tipo))
     session.commit()
     return {"caminho": caminho}
