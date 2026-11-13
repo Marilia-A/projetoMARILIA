@@ -3,7 +3,7 @@
 Diário do que foi feito no software, blocos de correções, decisões e pendências.
 Atualizado a cada etapa. (Itens de texto do TCC ficam no checklist pessoal; aqui só aparecem quando dependem do software.)
 
-Última atualização: **13/11/2026** (tarde)
+Última atualização: **13/11/2026** (fim da tarde)
 
 ---
 
@@ -64,6 +64,20 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
   - Tela do tutor passa a mostrar a mensagem real da API para 422 e 503 (antes trocava "O tutor está ocupado agora" por um texto genérico).
   - Professor pode consultar o próprio cadastro em `/usuarios/{id}` (antes recebia 403).
   - Testado com SQLite: 5×401 + 429; outro e-mail não é afetado; professor 200 no próprio cadastro e 403 no do admin; pergunta com 501 caracteres → 422.
+
+- Revisão do GitHub: descrições dos PRs #1 a #10 sem rodapés automáticos; branches temporários apagados; tags v1.0, v1.1 e v1.2 publicadas pela autora.
+- PR #10 – regra de autoria reescrita em texto neutro; v1.2 registrada.
+- Verificação de PRs passada para o chat "Verificar PR e Correções": revisar #1 a #10 e reportar qualquer falha de código (de qualquer nível) para correção posterior.
+
+---
+
+## Como trabalhamos (vale para todas as sessões)
+
+- **Regra primordial de autoria** (topo deste arquivo) antes de qualquer envio.
+- Um branch e um PR por bloco; tag só depois do merge, criada pela autora (o ambiente automatizado não consegue enviar tags nem apagar branches).
+- **Verificação por evento, não periódica**: sempre que um PR for aberto ou algo for enviado ao GitHub, o chat "Verificar PR e Correções" é avisado, revisa e testa. Sem check-ins a cada poucas horas.
+- Falhas encontradas na verificação (qualquer nível) são anotadas na seção "Falhas encontradas na verificação" abaixo e corrigidas depois, quando a autora pedir.
+- Este arquivo é a memória do projeto: cada sessão deve lê-lo antes de começar e atualizá-lo ao terminar.
 
 ---
 
@@ -135,6 +149,18 @@ Três arquivos, cada um com o que é necessário para aquela parte. **Escritos e
 - Seguir a **regra primordial de autoria** (topo deste arquivo).
 - Um branch e um PR **separado por bloco**; tag criada só depois do merge no `main`.
 - PRs acompanhados automaticamente (comentários, revisões e CI).
+
+### Para fazer mais tarde (agendado)
+- [ ] **Bloco 8 – visual infantil** no Flet (cores, ícones, telas mais atrativas) + prints das telas (roteiro, tutor, dashboard) para o 6.2 e para o README do front.
+- [ ] Testar o `MARILIA.exe` no Windows contra a nuvem (de preferência em outro PC).
+- [ ] Item CRÍTICO no Render (`SEED_USUARIOS_TESTE=false`, excluir `admin@teste.com`, trocar senhas de teste).
+- [ ] Preencher nos READMEs: sigla do MARILIA, orientação/instituição.
+- [ ] Padronizar os nomes dos roteiros entre texto e `backend/seed.py` ("Luz Noturna Automática" × "Luz Noturna com LDR"; "Alarme com Sensor de Presença" × "Alarme com Sensor PIR").
+- [ ] Corrigir as falhas que a verificação dos PRs apontar (seção abaixo).
+
+### Falhas encontradas na verificação
+*(preenchido pelo chat "Verificar PR e Correções"; nada corrigido sem pedido da autora)*
+- Já conhecidas: limite de login some se o servidor reiniciar e permite bloquear o login de outra pessoa; professor vê a lista de todos os alunos (decisão); padrão `SEED_USUARIOS_TESTE=true` no código.
 
 ### Melhorias opcionais
 - [ ] Dashboard com menos consultas por aluno
