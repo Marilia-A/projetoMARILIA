@@ -3,7 +3,7 @@
 Diário do que foi feito no software, blocos de correções, decisões e pendências.
 Atualizado a cada etapa. (Itens de texto do TCC ficam no checklist pessoal; aqui só aparecem quando dependem do software.)
 
-Última atualização: **13/11/2026** (fim da tarde)
+Última atualização: **14/11/2026**
 
 ---
 
@@ -12,7 +12,8 @@ Atualizado a cada etapa. (Itens de texto do TCC ficam no checklist pessoal; aqui
 **Todo o conteúdo do repositório é de autoria exclusiva da autora.**
 - Commits, merges e tags: somente `Marilia-A <mariliaalmeidarosa01@gmail.com>`.
 - Sem coautores, sem rodapés ou assinaturas automáticas em commits, PRs ou comentários.
-- Branches sempre com o nome do bloco (ex.: `bloco-7-visual`).
+- Branches sempre com o nome do bloco (ex.: `bloco-10-visual`).
+- Merge feito pelo computador da autora (`git merge --no-ff` + push), não pelo botão do site, para o committer também ser a autora.
 - Antes de cada push: conferir `git log --format='%an <%ae>%n%b'`. Depois de criar/editar PR: conferir a descrição.
 
 ---
@@ -24,7 +25,8 @@ Atualizado a cada etapa. (Itens de texto do TCC ficam no checklist pessoal; aqui
 | v1.0 | `8bd3ab4` | Antes das correções da análise de código |
 | v1.1 | `970d7c3` | Blocos 1 a 3 + DATABASE_URL + admin do seed (PRs #1 a #4) |
 | v1.2 | `5d6b100` | Blocos 4 e 5 – front na nuvem + executável; acesso do professor, upload, limites (PRs #5, #6 e os PRs de 13/11) |
-| v1.3 | *reservada* | Próximo bloco (visual infantil / melhorias) |
+| v1.3 | *a criar após o merge dos Blocos 8 e 9* | Correções da verificação (limite de login no banco, limpeza de imagens, usuários de teste desligados por padrão) + READMEs completos |
+| v1.4 | *reservada* | Bloco 10 – visual infantil |
 
 Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blocos já mesclados no `main`.
 
@@ -69,6 +71,18 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
 - PR #10 – regra de autoria reescrita em texto neutro; v1.2 registrada.
 - Verificação de PRs passada para o chat "Verificar PR e Correções": revisar #1 a #10 e reportar qualquer falha de código (de qualquer nível) para correção posterior.
 
+### 14/11/2026
+- PR #12 – `.gitignore` corrigido (`.env` e `dist/` voltam a ser ignorados). Merge local, committer da autora.
+- PR #11 – registro com verificação por evento, pendências e falhas. Merge local.
+- Texto do TCC revisado capítulo a capítulo (fora do repositório); PDF `TCC_Marilia_3` conferido.
+- **Bloco 8 – correções da verificação** (PR #13, branch `bloco-8-correcoes-verificacao`):
+  - limite de login guardado no banco (tabela `TentativaLogin`), por **e-mail + endereço** (5 erros/15 min) e geral por e-mail (20 erros/15 min); tentativas antigas apagadas a cada login; endereço lido do último item do `X-Forwarded-For` atrás do proxy do Render;
+  - imagens apagadas do banco quando nenhum roteiro, etapa ou termo as usa mais (troca ou exclusão);
+  - regra "aluno de turma do professor" em uma só função (`backend/seguranca.py`);
+  - `SEED_USUARIOS_TESTE` com padrão `false` no código; `.env.example` com `DATABASE_URL` comentada (SQLite por padrão);
+  - testado: 17 verificações em SQLite e PostgreSQL 16 + testes do Bloco 5.
+- **Bloco 9 – documentação** (branch `bloco-9-documentacao`): READMEs com a sigla, a autoria e o comportamento do Bloco 8; registro atualizado; renumeração (Bloco 10 = visual).
+
 ---
 
 ## Como trabalhamos (vale para todas as sessões)
@@ -86,7 +100,7 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
 - **Sem autocadastro**: só o admin cria usuários.
 - **Front desktop** (`.exe`) apontando para a API; web fica como trabalho futuro.
 - **Listagem de alunos para o professor** (`GET /usuarios`): o professor vê todos os alunos (nome, e-mail, ano) porque é dessa lista que ele escolhe quem adicionar à turma. Progresso, conquistas, histórico e detalhe continuam restritos às turmas dele. Alternativa futura: o professor só adiciona alunos pelo código da turma, e a listagem passa a mostrar só os alunos dele.
-- **Limite de login por e-mail** (e não por IP): o Render fica atrás de proxy e o IP real não é confiável sem configuração extra. Efeito colateral aceito: alguém que erre a senha de outra pessoa 5 vezes bloqueia aquele login por 15 min.
+- **Limite de login por e-mail + endereço** (Bloco 8, substitui a decisão de 13/11 de contar só por e-mail): errar a senha de outra pessoa a partir de outro computador não bloqueia mais a conta dela. O limite geral de 20 erros por e-mail continua existindo como proteção contra tentativas de vários endereços; nesse caso extremo, a conta pode ficar bloqueada por até 15 min.
 
 ---
 
@@ -95,7 +109,7 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
 ### Configuração na nuvem (sem código)
 - [ ] Testar o login do admin no Swagger (`/docs` → `POST /usuarios/login`).
 - [ ] **CRÍTICO**: `SEED_USUARIOS_TESTE=false` no Render; excluir `admin@teste.com` pelo app; trocar a senha do aluno/professor de teste (o repositório é público e mostra a senha padrão).
-- [ ] Observação: no código o padrão de `SEED_USUARIOS_TESTE` é `true`. O `render.yaml` já define `false`, mas vale conferir no painel do Render se a variável está mesmo lá. (Melhoria possível: mudar o padrão do código para `false`.)
+- [x] Padrão de `SEED_USUARIOS_TESTE` mudado para `false` no código (Bloco 8). Mesmo assim, conferir no painel do Render.
 
 ### Bloco 4 – front na nuvem + executável → tag v1.2
 - [x] Front aponta para a nuvem por padrão
@@ -103,7 +117,7 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
 - [ ] Gerar o `.exe` no Windows e testar (login, roteiro, tutor, dashboard)
 - [x] PR #7 mesclado + tag v1.2
 
-### Bloco 5 – segurança e limites → tag v1.3
+### Bloco 5 – segurança e limites → tag v1.2
 - [x] Professor só acessa dados de alunos das próprias turmas (PRs #5 e #6)
 - [x] Tipo da imagem pela extensão (PR #5)
 - [x] Limite de tentativas de login
@@ -111,9 +125,9 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
 - [x] PR #8 mesclado → incluído na tag v1.2
 
 ### Bloco 6 – Documentação (READMEs para o GitHub)
-Três arquivos, cada um com o que é necessário para aquela parte. **Escritos e mesclados em 13/11** (PR #9), junto com `.env.example`. Falta: sigla do MARILIA no README da raiz, prints das telas no README do front, orientação/instituição na seção Autoria.
+Três arquivos, cada um com o que é necessário para aquela parte. **Escritos e mesclados em 13/11** (PR #9), junto com `.env.example`. Sigla e autoria preenchidas no Bloco 9 (14/11). Falta só: prints das telas no README do front (Bloco 10).
 
-- [ ] **`README.md` (raiz)**
+- [x] **`README.md` (raiz)**
   - O que é o MARILIA (origem do nome, público, contexto do START e do TCC)
   - Funcionalidades por perfil (aluno, professor, admin)
   - Arquitetura: front Flet desktop → API FastAPI → PostgreSQL; IA (Groq / Gemini); diagrama simples
@@ -123,7 +137,7 @@ Três arquivos, cada um com o que é necessário para aquela parte. **Escritos e
   - Versões / tags (v1.0 a v1.3) e o que cada uma traz
   - Privacidade / LGPD (minimização de dados, professor só vê os próprios alunos, usuários de teste desligados em produção)
   - Autoria, orientação e licença
-- [ ] **`backend/README.md`**
+- [x] **`backend/README.md`**
   - Requisitos: Python 3.13, PostgreSQL 16 (ou SQLite para teste rápido)
   - Instalação: `pip install -r requirements-api.txt`
   - Variáveis de ambiente (tabela, com obrigatoriedade e padrão):
@@ -134,7 +148,7 @@ Três arquivos, cada um com o que é necessário para aquela parte. **Escritos e
   - Rotas por grupo e quem pode acessar (aluno / professor / admin)
   - Segurança: JWT, hash de senha, limite de login, limite da pergunta, upload de imagens (tipos e 5 MB)
   - Deploy no Render (`render.yaml`) + Neon; variável `MARILIA_API_URL` do ping
-- [ ] **`frontend/README.md`**
+- [x] **`frontend/README.md`**
   - Requisitos: Python 3.13, Windows (para o `.exe`)
   - Instalação: `pip install -r requirements.txt`
   - Rodar em desenvolvimento: `python main.py` dentro de `frontend/`
@@ -143,7 +157,7 @@ Três arquivos, cada um com o que é necessário para aquela parte. **Escritos e
   - Primeira abertura: o servidor gratuito pode levar até ~1 min para acordar (o app espera até 90 s)
   - Telas por perfil (com prints quando o visual estiver pronto)
   - Problemas comuns (sem conexão, sessão expirada, muitas tentativas de login, tutor ocupado)
-- [ ] Revisar se `requirements.txt` (front + back) e `requirements-api.txt` (só servidor) estão descritos certo.
+- [x] Revisar se `requirements.txt` (front + back) e `requirements-api.txt` (só servidor) estão descritos certo.
 
 ### Fluxo de trabalho
 - Seguir a **regra primordial de autoria** (topo deste arquivo).
@@ -151,38 +165,38 @@ Três arquivos, cada um com o que é necessário para aquela parte. **Escritos e
 - PRs acompanhados automaticamente (comentários, revisões e CI).
 
 ### Para fazer mais tarde (agendado)
-- [ ] **Bloco 8 – visual infantil** no Flet (cores, ícones, telas mais atrativas) + prints das telas (roteiro, tutor, dashboard) para o 6.2 e para o README do front.
+- [ ] **Bloco 10 – visual infantil** no Flet (cores, ícones, telas mais atrativas) + prints das telas (roteiro, tutor, dashboard) para o 6.2 e para o README do front.
 - [ ] Testar o `MARILIA.exe` no Windows contra a nuvem (de preferência em outro PC).
 - [ ] Item CRÍTICO no Render (`SEED_USUARIOS_TESTE=false`, excluir `admin@teste.com`, trocar senhas de teste).
-- [ ] Preencher nos READMEs: sigla do MARILIA, orientação/instituição.
-- [ ] Padronizar os nomes dos roteiros entre texto e `backend/seed.py` ("Luz Noturna Automática" × "Luz Noturna com LDR"; "Alarme com Sensor de Presença" × "Alarme com Sensor PIR").
-- [ ] Corrigir as falhas que a verificação dos PRs apontar (seção abaixo).
+- [x] Preencher nos READMEs: sigla do MARILIA, orientação/instituição (Bloco 9).
+- [x] Padronizar os nomes dos roteiros entre texto e `backend/seed.py` (o texto do TCC passou a usar os nomes do app, 14/11) ("Luz Noturna Automática" × "Luz Noturna com LDR"; "Alarme com Sensor de Presença" × "Alarme com Sensor PIR").
+- [x] Corrigir as falhas que a verificação dos PRs apontou (Bloco 8, PR #13).
 
 ### Falhas encontradas na verificação
 *(preenchido pelo chat "Verificar PR e Correções"; nada corrigido sem pedido da autora)*
 Revisão de 13/11 dos PRs #1 a #11 (53 verificações automáticas passaram na `main` 4d14675):
 
 - 🔴 **`.gitignore` sem proteger `.env` e `dist/`** (linhas grudadas desde o PR #7) → corrigido no PR #12.
-- 🟠 **Committer dos merges pelo site**: merges dos PRs #5 a #10 (e o commit da v1.2) ficam com committer "GitHub" (padrão do botão de merge). Não reescrever o histórico; daqui para frente, merge local (`git merge --no-ff` + push) evita.
-- 🟠 **Limite de login usado contra outra pessoa**: 5 senhas erradas bloqueiam aquele e-mail por 15 min, mesmo com a senha certa depois; contagem em memória se perde quando o Render reinicia.
-- 🟡 Lista de falhas de login só cresce (e-mails inventados ficam guardados até o servidor reiniciar).
-- 🟡 `.env.example` com `DATABASE_URL` de Postgres ativa: quem copiar sem editar e não tiver Postgres não sobe a API.
-- 🟡 Imagens de itens excluídos/trocados continuam no banco.
-- 🟡 Regra "aluno de turma do professor" repetida em dois lugares (`seguranca.py` e `routers/usuarios.py`) → juntar numa função.
+- ✅ (regra) 🟠 **Committer dos merges pelo site**: merges dos PRs #5 a #10 (e o commit da v1.2) ficam com committer "GitHub" (padrão do botão de merge). Não reescrever o histórico; daqui para frente, merge local (`git merge --no-ff` + push) evita.
+- ✅ (Bloco 8) 🟠 **Limite de login usado contra outra pessoa**: 5 senhas erradas bloqueiam aquele e-mail por 15 min, mesmo com a senha certa depois; contagem em memória se perde quando o Render reinicia.
+- ✅ (Bloco 8) 🟡 Lista de falhas de login só cresce (e-mails inventados ficam guardados até o servidor reiniciar).
+- ✅ (Bloco 8) 🟡 `.env.example` com `DATABASE_URL` de Postgres ativa: quem copiar sem editar e não tiver Postgres não sobe a API.
+- ✅ (Bloco 8) 🟡 Imagens de itens excluídos/trocados continuam no banco.
+- ✅ (Bloco 8) 🟡 Regra "aluno de turma do professor" repetida em dois lugares (`seguranca.py` e `routers/usuarios.py`) → juntar numa função.
 - 🟡 `gerar_executavel.bat` ainda não testado no Windows.
-- Decisões já conhecidas: professor vê a lista de todos os alunos; padrão `SEED_USUARIOS_TESTE=true` no código.
+- Decisão mantida: professor vê a lista de todos os alunos. Padrão `SEED_USUARIOS_TESTE` já é `false` (Bloco 8).
 
 ### Melhorias opcionais
 - [ ] Dashboard com menos consultas por aluno
-- [ ] Apagar imagens antigas do banco ao trocar/excluir
+- [x] Apagar imagens antigas do banco ao trocar/excluir (Bloco 8)
 - [x] Mensagem "tutor ocupado" no app (13/11)
 - [ ] Progresso único por aluno/roteiro no banco (restrição de unicidade)
 - [ ] Recriar o serviço do Render na região Virginia (banco está na Virginia) se o dashboard ficar lento
-- [ ] Visual infantil no Flet + prints das telas para o TCC (6.2)
-- [ ] Padrão de `SEED_USUARIOS_TESTE` = `false` no código
+- [ ] Visual infantil no Flet + prints das telas para o TCC (6.2) → Bloco 10
+- [x] Padrão de `SEED_USUARIOS_TESTE` = `false` no código (Bloco 8)
 
 ### Dependências do texto do TCC ligadas ao software
-- 3.4, 5.1, 5.3.7 e 6.1: incluir a implantação na nuvem (Neon + Render) como demonstração, imagens no banco, admin por variável de ambiente, usuários de teste desligados (+ LGPD).
-- 6.1/6.2: citar o limite de login (5 tentativas / 15 min) e o limite da pergunta (500 caracteres) entre as medidas de segurança.
-- 6.3: tempo de login medido na nuvem (~0,6 s, RNF08 < 2 s).
-- Cap. 7: versão web do Flet como trabalho futuro.
+- ✅ 3.4, 5.1, 5.6 e 6.1: implantação na nuvem, imagens no banco, admin por variável de ambiente, usuários de teste desligados (texto revisado em 14/11).
+- ✅ 6.1: limite de login e da pergunta citados. **Atualizar a frase** quando o Bloco 8 entrar: o bloqueio passa a ser por e-mail + endereço (5 erros em 15 min), com limite geral de 20 por e-mail.
+- ✅ 6.3: tempo de login na nuvem (~0,6 s, RNF08).
+- ✅ Cap. 7: versão web como trabalho futuro.

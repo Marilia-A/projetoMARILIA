@@ -90,6 +90,6 @@ gerar_executavel.bat   Gera o MARILIA.exe
 |---|---|
 | "Não foi possível conectar ao servidor." | Verifique a internet. Na primeira abertura do dia o servidor gratuito pode levar até ~1 minuto para acordar (o app espera até 90 s); tente de novo. |
 | "Sua sessão expirou. Entre novamente." | O token de login venceu; basta entrar de novo. |
-| "Muitas tentativas de login. Aguarde N minuto(s)…" | Foram 5 senhas erradas seguidas para aquele e-mail; espere o tempo indicado. |
+| "Muitas tentativas de login. Aguarde N minuto(s)…" | Foram 5 senhas erradas para aquele e-mail a partir deste computador (ou 20 no total); espere o tempo indicado. |
 | "O tutor está ocupado agora. Tente de novo em instantes." | O serviço de IA está sobrecarregado; espere alguns segundos. |
 | "A pergunta pode ter no máximo 500 caracteres." | Resuma a dúvida (o campo mostra o contador). |

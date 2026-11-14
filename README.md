@@ -1,5 +1,7 @@
 # MARILIA
 
+**M**etodologias **A**tivas de **R**obótica para **I**ntegração, **L**ógica e **I**novação na **A**prendizagem.
+
 Aplicativo de tutoria para alunos da educação básica que estão aprendendo robótica com Arduino.
 
 O aluno segue roteiros práticos passo a passo, consulta um glossário ilustrado e tira dúvidas com um tutor de IA que responde no nível de profundidade escolhido (superficial, moderado ou detalhado), sempre dentro do tema do roteiro. O professor acompanha o progresso das suas turmas em um painel, e o administrador gerencia usuários, roteiros e glossário.
@@ -95,7 +97,8 @@ Para uso em uma escola, a mesma API pode rodar em um servidor da rede local; bas
 - Dados mínimos do aluno (nome, e-mail, ano escolar). O tutor de IA recebe apenas a pergunta e o conteúdo do roteiro.
 - O professor só acessa progresso, conquistas e histórico de alunos das próprias turmas.
 - Usuários de teste (`SEED_USUARIOS_TESTE`) ficam desligados em produção; o administrador inicial é definido por variável de ambiente.
-- Limite de tentativas de login e de tamanho das perguntas ao tutor.
+- Limite de tentativas de login (por e-mail e endereço de quem tenta, guardado no banco) e de tamanho das perguntas ao tutor.
+- Imagens que deixam de ser usadas são apagadas do banco.
 
 ## Versões
 
@@ -104,9 +107,15 @@ Para uso em uma escola, a mesma API pode rodar em um servidor da rede local; bas
 | `v1.0` | Primeira versão completa (antes das correções da análise de código) |
 | `v1.1` | Blocos 1 a 3: segurança (JWT obrigatório, e-mail sem maiúsculas, permissões do professor), sessão expirada no app, imagens no banco, implantação na nuvem |
 | `v1.2` | Blocos 4 e 5: app aponta para a nuvem e gera `.exe`; professor restrito aos próprios alunos; tipo de imagem pela extensão; limites de login e de pergunta |
+| `v1.3` | Blocos 8 e 9: limite de login guardado no banco por e-mail e endereço; limpeza de imagens sem uso; usuários de teste desligados por padrão; READMEs completos |
 
 O histórico detalhado está em [docs/REGISTRO.md](docs/REGISTRO.md).
 
 ## Autoria
 
-Marilia Almeida Rosa Pereira — Trabalho de Conclusão de Curso, 2026.
+- **Autora:** Marília Almeida Rosa Pereira
+- **Orientador:** Prof. Dr. Aladir Ferreira da Silva Júnior
+- **Instituição:** Instituto Federal de Educação, Ciência e Tecnologia de Goiás (IFG), Câmpus Jataí
+- **Curso:** Curso Superior de Tecnologia em Análise e Desenvolvimento de Sistemas
+
+Trabalho de Conclusão de Curso, 2026: *MARILIA: aplicativo para suporte ao aluno no aprendizado e aplicação de robótica no ensino básico*.
