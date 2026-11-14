@@ -7,7 +7,7 @@ import sessao
 
 
 def mostrar(page: ft.Page):
-    resultados = ft.Column()
+    resultados = ft.Column(spacing=12)
 
     def carregar():
         texto = (campo_busca.value or "").strip()
@@ -24,30 +24,34 @@ def mostrar(page: ft.Page):
             ]
         else:
             cartoes = []
-            for t in termos:
-                conteudo = [
-                    ft.Text(t["nome"], size=18, weight=ft.FontWeight.BOLD),
-                    ft.Text(t["definicao"], size=16),
-                ]
-                if t["imagem"]:
-                    conteudo.append(c.imagem(t["imagem"], altura=150))
+            for i, t in enumerate(termos):
+                extra = [c.imagem(t["imagem"], altura=150)] if t["imagem"] else []
                 cartoes.append(
-                    ft.Card(content=ft.Container(padding=15, content=ft.Column(conteudo)))
+                    c.cartao(
+                        t["nome"],
+                        t["definicao"],
+                        icone=ft.Icons.MENU_BOOK,
+                        cor=c.CORES_CARTOES[i % len(c.CORES_CARTOES)],
+                        extra=extra,
+                    )
                 )
             resultados.controls = cartoes
         page.update()
 
     linha_busca, campo_busca = c.barra_busca("Buscar termo", carregar)
 
-    cabecalho = [c.botao_voltar("roteiros"), c.titulo("Glossário")]
+    extras = []
     if sessao.pode_gerenciar():
-        cabecalho.append(
-            ft.OutlinedButton(
-                "Gerenciar glossário",
+        extras.append(
+            ft.IconButton(
                 icon=ft.Icons.SETTINGS,
+                icon_color=ft.Colors.WHITE,
+                tooltip="Gerenciar glossário",
                 on_click=lambda e: navegacao.ir("gerenciar_glossario"),
             )
         )
+    cabecalho = c.cabecalho("Glossário", ft.Icons.MENU_BOOK, voltar="roteiros",
+                            subtitulo="As palavras da robótica explicadas em português", extras=extras)
 
-    c.mostrar(page, ft.Row(cabecalho), linha_busca, resultados)
+    c.mostrar(page, cabecalho, linha_busca, resultados)
     carregar()
