@@ -25,3 +25,11 @@ services:
         sync: false
       - key: ADMIN_SENHA
         sync: false
+      - key: DEMO_PROFESSOR_EMAIL
+        sync: false
+      - key: DEMO_PROFESSOR_SENHA
+        sync: false
+      - key: DEMO_ALUNO_EMAIL
+        sync: false
+      - key: DEMO_ALUNO_SENHA
+        sync: false

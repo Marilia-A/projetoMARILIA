@@ -4,7 +4,8 @@ from pathlib import Path
 from sqlmodel import Session, func, select
 
 from backend.database import engine
-from backend.models import Badge, Etapa, Roteiro, TermoGlossario, TipoUsuario, Usuario
+from backend.models import Badge, Etapa, Roteiro, TermoGlossario, TipoUsuario, Turma, TurmaAluno, Usuario
+from backend.routers.turmas import gerar_codigo
 from backend.seguranca import gerar_hash, verificar_senha
 
 PASTA_IMAGENS = Path(__file__).parent / "imagens"
@@ -378,6 +379,45 @@ USUARIOS = [
 ]
 
 
+NOME_TURMA_DEMO = "Turma de Demonstração"
+
+
+def garantir_usuario(session: Session, variavel: str, nome: str, tipo: TipoUsuario, ano: str | None = None):
+    """Cria (ou atualiza a senha de) um usuário de demonstração definido por variáveis de ambiente.
+
+    As senhas ficam só no servidor (ex.: painel do Render), nunca no código.
+    """
+    email = (os.getenv(f"{variavel}_EMAIL") or "").strip().lower()
+    senha = os.getenv(f"{variavel}_SENHA") or ""
+    if not email or not senha:
+        return None
+    existe = session.exec(select(Usuario).where(func.lower(Usuario.email) == email)).first()
+    if existe:
+        if existe.tipo != tipo:
+            print(f"Aviso: {email} já existe com outro perfil ({existe.tipo.value}); não foi alterado.")
+            return None
+        if not verificar_senha(senha, existe.senha_hash):
+            existe.senha_hash = gerar_hash(senha)
+            session.add(existe)
+        return existe
+    usuario = Usuario(nome=nome, email=email, tipo=tipo, ano_escolar=ano, senha_hash=gerar_hash(senha))
+    session.add(usuario)
+    session.flush()
+    return usuario
+
+
+def garantir_turma_demo(session: Session, professor: Usuario, aluno: Usuario) -> None:
+    turma = session.exec(
+        select(Turma).where(Turma.nome == NOME_TURMA_DEMO, Turma.professor_id == professor.id)
+    ).first()
+    if not turma:
+        turma = Turma(nome=NOME_TURMA_DEMO, codigo=gerar_codigo(session), professor_id=professor.id)
+        session.add(turma)
+        session.flush()
+    if not session.get(TurmaAluno, (turma.id, aluno.id)):
+        session.add(TurmaAluno(turma_id=turma.id, aluno_id=aluno.id))
+
+
 def carregar_dados_iniciais():
     with Session(engine) as session:
         if not session.exec(select(Roteiro)).first():
@@ -422,5 +462,10 @@ def carregar_dados_iniciais():
                 if not verificar_senha(senha_admin, existe.senha_hash):
                     existe.senha_hash = gerar_hash(senha_admin)
                 session.add(existe)
+
+        professor_demo = garantir_usuario(session, "DEMO_PROFESSOR", "Professor Demonstração", TipoUsuario.professor)
+        aluno_demo = garantir_usuario(session, "DEMO_ALUNO", "Aluno Demonstração", TipoUsuario.aluno, "8º ano")
+        if professor_demo and aluno_demo:
+            garantir_turma_demo(session, professor_demo, aluno_demo)
 
         session.commit()

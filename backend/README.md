@@ -41,6 +41,8 @@ Copie `.env.example` (na raiz) para `.env` e preencha. O arquivo `.env` está no
 | `GEMINI_MODEL` | Não | `gemini-3.5-flash-lite` | Modelo usado no Gemini. |
 | `ADMIN_EMAIL` | Recomendada | — | E-mail do administrador inicial (criado no primeiro início). |
 | `ADMIN_SENHA` | Recomendada | — | Senha desse administrador. Se mudar, a senha é atualizada no próximo início. |
+| `DEMO_PROFESSOR_EMAIL` / `DEMO_PROFESSOR_SENHA` | Não | — | Professor de demonstração (criado no início; trocar a senha aqui atualiza a do banco). |
+| `DEMO_ALUNO_EMAIL` / `DEMO_ALUNO_SENHA` | Não | — | Aluno de demonstração (8º ano). Com os dois definidos, é criada a "Turma de Demonstração" com o professor e o aluno. |
 | `SEED_USUARIOS_TESTE` | Não | `false` | `true` cria usuários de teste (admin, professor e aluno com senha conhecida). Use só no seu computador, **nunca** em ambiente público. |
 
 ## Como rodar
@@ -65,7 +67,8 @@ Ao subir, a API cria as tabelas que ainda não existem (inclusive as novas, como
 - os 5 roteiros (com etapas, materiais, código e sugestões);
 - os 12 termos do glossário;
 - as conquistas (badges);
-- o administrador de `ADMIN_EMAIL`/`ADMIN_SENHA`;
+- o administrador de `ADMIN_EMAIL`/`ADMIN_SENHA` (único admin criado automaticamente);
+- o professor e o aluno de demonstração (`DEMO_*`), já na "Turma de Demonstração", se as variáveis existirem;
 - os usuários de teste, somente se `SEED_USUARIOS_TESTE=true` (desligado por padrão).
 
 O seed não duplica nada: pode rodar quantas vezes for preciso.
@@ -75,7 +78,7 @@ O seed não duplica nada: pode rodar quantas vezes for preciso.
 | Grupo | Rotas | Quem acessa |
 |---|---|---|
 | Login | `POST /usuarios/login` | Público |
-| Usuários | `POST/PUT/DELETE /usuarios` | Admin |
+| Usuários | `POST/PUT/DELETE /usuarios` | Admin (não há autocadastro: sem login → 401; aluno e professor → 403) |
 | | `GET /usuarios`, `GET /usuarios/{id}` | Admin (todos); professor (lista de alunos; detalhe só dos alunos das suas turmas e do próprio cadastro) |
 | Roteiros | `GET /roteiros`, `GET /roteiros/{id}` | Qualquer usuário logado |
 | | `POST/PUT/DELETE /roteiros` | Professor e admin |
@@ -109,7 +112,7 @@ O seed não duplica nada: pode rodar quantas vezes for preciso.
 2. No Render, crie o serviço a partir do `render.yaml` (Blueprint) ou manualmente:
    - Build: `pip install -r requirements-api.txt`
    - Start: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
-3. Preencha as variáveis: `DATABASE_URL`, `GROQ_API_KEY` (ou Gemini), `ADMIN_EMAIL`, `ADMIN_SENHA`. O `render.yaml` já define `SEED_USUARIOS_TESTE=false`, `IA_PROVEDOR=groq` e gera o `JWT_SECRET`.
+3. Preencha as variáveis: `DATABASE_URL`, `GROQ_API_KEY` (ou Gemini), `ADMIN_EMAIL`, `ADMIN_SENHA` e, se quiser contas de demonstração, `DEMO_PROFESSOR_*` e `DEMO_ALUNO_*`. O `render.yaml` já define `SEED_USUARIOS_TESTE=false`, `IA_PROVEDOR=groq` e gera o `JWT_SECRET`.
 4. Confira `https://<servico>.onrender.com/` (`{"status": "ok"}`) e `/docs`.
 5. Para evitar que o serviço gratuito durma, defina no GitHub a variável de repositório `MARILIA_API_URL` (Settings → Secrets and variables → Actions → Variables) com o endereço da API; o workflow `manter-api-acordada.yml` faz o ping a cada 10 minutos.
 

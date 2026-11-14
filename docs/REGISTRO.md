@@ -81,6 +81,9 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
   - regra "aluno de turma do professor" em uma só função (`backend/seguranca.py`);
   - `SEED_USUARIOS_TESTE` com padrão `false` no código; `.env.example` com `DATABASE_URL` comentada (SQLite por padrão);
   - testado: 17 verificações em SQLite e PostgreSQL 16 + testes do Bloco 5.
+- **Verificação na nuvem** (`verificar_nuvem.py`, rodado pela autora): 56/62 → PR #15 (endereço real pelo `CF-Connecting-IP`/1º item do `X-Forwarded-For`; login certo com 2 consultas em vez de 5) → 59/62 → usuários de teste excluídos e `SEED_USUARIOS_TESTE=false` no Render → **61/62** (login 1,9–2,1 s, ver decisão sobre o hash).
+- Tags: v1.3 em `1d547b2` (Blocos 8 e 9); v1.3.1 sugerida em `caf7b48` (correção do PR #15).
+- **Bloco 11 – usuários de demonstração** (branch `bloco-11-usuarios-demonstracao`): professor e aluno criados por `DEMO_PROFESSOR_*`/`DEMO_ALUNO_*` (senhas só no servidor), já ligados à "Turma de Demonstração"; admin continua sendo só o do `ADMIN_*`. Testado: 14 verificações, incluindo cadastro bloqueado para quem não é admin (401/403).
 - **Bloco 9 – documentação** (branch `bloco-9-documentacao`): READMEs com a sigla, a autoria e o comportamento do Bloco 8; registro atualizado; renumeração (Bloco 10 = visual).
 
 ---
