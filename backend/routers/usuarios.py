@@ -47,28 +47,40 @@ def _utc(momento: datetime) -> datetime:
 
 
 def ip_do_cliente(request: Request) -> str:
-    # Atrás do proxy do Render, o último endereço do X-Forwarded-For é o que o proxy viu.
+    """Endereço de quem fez o pedido.
+
+    Na nuvem, o pedido passa por proxies (Cloudflare e o balanceador do Render) e o endereço da
+    conexão é o do proxy, não o do aluno. O Cloudflare grava o endereço real em CF-Connecting-IP;
+    sem ele, usa-se o primeiro item do X-Forwarded-For. Na rede local da escola não há proxy e
+    vale o endereço da própria conexão.
+    """
+    for cabecalho in ("cf-connecting-ip", "true-client-ip"):
+        valor = request.headers.get(cabecalho)
+        if valor:
+            return valor.strip()
     encaminhado = request.headers.get("x-forwarded-for")
     if encaminhado:
-        return encaminhado.split(",")[-1].strip()
+        return encaminhado.split(",")[0].strip()
     return request.client.host if request.client else "desconhecido"
 
 
-def _bloqueio(session: Session, email: str, ip: str) -> int | None:
-    """Apaga tentativas antigas e devolve os minutos de espera, ou None se não houver bloqueio."""
+def _tentativas_recentes(session: Session, email: str) -> list[tuple[str, datetime]]:
     limite = _agora() - JANELA_LOGIN
-    session.exec(delete(TentativaLogin).where(TentativaLogin.data_hora < limite))
-    session.commit()
-    regras = (
-        (TENTATIVAS_POR_ENDERECO, (TentativaLogin.email == email, TentativaLogin.ip == ip)),
-        (TENTATIVAS_POR_EMAIL, (TentativaLogin.email == email,)),
-    )
-    for maximo, filtros in regras:
-        total, mais_antiga = session.exec(
-            select(func.count(), func.min(TentativaLogin.data_hora)).where(*filtros)
-        ).one()
-        if total >= maximo:
-            restante = (_utc(mais_antiga) + JANELA_LOGIN - _agora()).total_seconds()
+    linhas = session.exec(
+        select(TentativaLogin.ip, TentativaLogin.data_hora).where(
+            TentativaLogin.email == email, TentativaLogin.data_hora >= limite
+        )
+    ).all()
+    return [(ip, _utc(data)) for ip, data in linhas]
+
+
+def _minutos_de_bloqueio(tentativas: list[tuple[str, datetime]], ip: str) -> int | None:
+    """Devolve os minutos de espera, ou None se não houver bloqueio."""
+    do_endereco = [data for endereco, data in tentativas if endereco == ip]
+    todas = [data for _, data in tentativas]
+    for maximo, datas in ((TENTATIVAS_POR_ENDERECO, do_endereco), (TENTATIVAS_POR_EMAIL, todas)):
+        if len(datas) >= maximo:
+            restante = (min(datas) + JANELA_LOGIN - _agora()).total_seconds()
             return max(1, math.ceil(restante / 60))
     return None
 
@@ -115,7 +127,8 @@ def criar_usuario(
 def login(dados: LoginDados, request: Request, session: Session = Depends(get_session)):
     email = dados.email.strip().lower()
     ip = ip_do_cliente(request)
-    minutos = _bloqueio(session, email, ip)
+    tentativas = _tentativas_recentes(session, email)
+    minutos = _minutos_de_bloqueio(tentativas, ip)
     if minutos is not None:
         raise HTTPException(
             status_code=429,
@@ -123,12 +136,15 @@ def login(dados: LoginDados, request: Request, session: Session = Depends(get_se
         )
     usuario = session.exec(select(Usuario).where(func.lower(Usuario.email) == email)).first()
     if not usuario or not verificar_senha(dados.senha, usuario.senha_hash):
+        # a limpeza das tentativas antigas acontece só aqui, junto com a gravação da falha
+        session.exec(delete(TentativaLogin).where(TentativaLogin.data_hora < _agora() - JANELA_LOGIN))
         session.add(TentativaLogin(email=email, ip=ip, data_hora=_agora()))
         session.commit()
         raise HTTPException(status_code=401, detail="E-mail ou senha inválidos")
     resposta = LoginResposta(**usuario.model_dump(exclude={"senha_hash"}), access_token=criar_token(usuario))
-    session.exec(delete(TentativaLogin).where(TentativaLogin.email == email, TentativaLogin.ip == ip))
-    session.commit()
+    if any(endereco == ip for endereco, _ in tentativas):
+        session.exec(delete(TentativaLogin).where(TentativaLogin.email == email, TentativaLogin.ip == ip))
+        session.commit()
     return resposta
 
 
