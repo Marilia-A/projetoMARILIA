@@ -41,7 +41,7 @@ Copie `.env.example` (na raiz) para `.env` e preencha. O arquivo `.env` está no
 | `GEMINI_MODEL` | Não | `gemini-3.5-flash-lite` | Modelo usado no Gemini. |
 | `ADMIN_EMAIL` | Recomendada | — | E-mail do administrador inicial (criado no primeiro início). |
 | `ADMIN_SENHA` | Recomendada | — | Senha desse administrador. Se mudar, a senha é atualizada no próximo início. |
-| `SEED_USUARIOS_TESTE` | Não | `true` | Cria usuários de teste (admin, professor e aluno com senha conhecida). **Use `false` em qualquer ambiente público.** |
+| `SEED_USUARIOS_TESTE` | Não | `false` | `true` cria usuários de teste (admin, professor e aluno com senha conhecida). Use só no seu computador, **nunca** em ambiente público. |
 
 ## Como rodar
 
@@ -54,17 +54,19 @@ uvicorn backend.main:app --reload
 - API: `http://127.0.0.1:8000`
 - Documentação interativa (Swagger): `http://127.0.0.1:8000/docs` — para testar rotas protegidas, faça `POST /usuarios/login`, copie o `access_token` e clique em **Authorize**.
 
+Para ter os usuários de teste no seu computador, coloque `SEED_USUARIOS_TESTE=true` no `.env`.
+
 Para o app em outro computador da mesma rede: `uvicorn backend.main:app --host 0.0.0.0 --port 8000`.
 
 ## O que é criado no primeiro início
 
-Ao subir, a API cria as tabelas (se não existirem) e o *seed* carrega:
+Ao subir, a API cria as tabelas que ainda não existem (inclusive as novas, como `TentativaLogin`) e o *seed* carrega:
 
 - os 5 roteiros (com etapas, materiais, código e sugestões);
 - os 12 termos do glossário;
 - as conquistas (badges);
 - o administrador de `ADMIN_EMAIL`/`ADMIN_SENHA`;
-- os usuários de teste, somente se `SEED_USUARIOS_TESTE=true`.
+- os usuários de teste, somente se `SEED_USUARIOS_TESTE=true` (desligado por padrão).
 
 O seed não duplica nada: pode rodar quantas vezes for preciso.
 
@@ -92,9 +94,13 @@ O seed não duplica nada: pode rodar quantas vezes for preciso.
 
 - **Autenticação**: JWT (`Authorization: Bearer <token>`); token expirado devolve 401 e o app volta ao login.
 - **Senhas**: guardadas só como hash; mínimo de 6 caracteres.
-- **Limite de login**: 5 senhas erradas para o mesmo e-mail em 15 minutos → HTTP 429 até a janela passar. Controle em memória (um único servidor).
+- **Limite de login** (guardado no banco, tabela `TentativaLogin`, não se perde quando o servidor reinicia):
+  - 5 senhas erradas para o mesmo e-mail **a partir do mesmo endereço** em 15 minutos → HTTP 429 para aquele endereço; a dona da conta continua entrando de outro computador;
+  - 20 senhas erradas para o mesmo e-mail, de qualquer endereço, em 15 minutos → HTTP 429 (proteção contra tentativas distribuídas);
+  - um login certo apaga as falhas daquele e-mail e endereço; tentativas com mais de 15 minutos são apagadas automaticamente;
+  - atrás de proxy (Render), o endereço é o último item do cabeçalho `X-Forwarded-For`.
 - **Tutor**: pergunta de até 500 caracteres; instruções com regras de segurança e restrição ao tema (robótica, eletrônica, programação e o roteiro em estudo); nenhum dado pessoal vai para a IA. Se o provedor estiver sobrecarregado, a API tenta de novo e, se não conseguir, devolve 503 "O tutor está ocupado agora".
-- **Upload**: só `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, até 5 MB; o tipo é definido pela extensão; as imagens ficam no banco (tabela `Imagem`).
+- **Upload**: só `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, até 5 MB; o tipo é definido pela extensão; as imagens ficam no banco (tabela `Imagem`) e são apagadas quando nenhum roteiro, etapa ou termo do glossário as usa mais.
 - **LGPD**: professor restrito aos alunos das próprias turmas; e-mails comparados sem diferença de maiúsculas.
 
 ## Implantação (Render + Neon)
