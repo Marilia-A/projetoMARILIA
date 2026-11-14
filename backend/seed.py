@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 from backend.database import engine
 from backend.models import Badge, Etapa, Roteiro, TermoGlossario, TipoUsuario, Usuario
@@ -407,7 +407,7 @@ def carregar_dados_iniciais():
         email_admin = (os.getenv("ADMIN_EMAIL") or "").strip().lower()
         senha_admin = os.getenv("ADMIN_SENHA") or ""
         if email_admin and senha_admin:
-            existe = session.exec(select(Usuario).where(Usuario.email == email_admin)).first()
+            existe = session.exec(select(Usuario).where(func.lower(Usuario.email) == email_admin)).first()
             if not existe:
                 session.add(
                     Usuario(

@@ -9,7 +9,7 @@ from sqlmodel import Session, select
 from backend.database import get_session
 from backend.models import Etapa, HistoricoInteracao, Roteiro, Usuario
 from backend.schemas import HistoricoLer, NivelProfundidade, PerguntaTutor
-from backend.seguranca import exigir_proprio_ou_gerente, usuario_atual
+from backend.seguranca import exigir_acesso_ao_aluno, usuario_atual
 
 load_dotenv()
 
@@ -18,6 +18,7 @@ router = APIRouter(tags=["Tutor"])
 URL_GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent"
 URL_GROQ = "https://api.groq.com/openai/v1/chat/completions"
 TENTATIVAS = 3
+PERGUNTA_MAXIMA = 500  # caracteres
 
 INSTRUCOES_NIVEL = {
     NivelProfundidade.superficial: (
@@ -138,6 +139,8 @@ def perguntar(
         raise HTTPException(403, "Você só pode perguntar com o próprio usuário.")
     if not dados.pergunta.strip():
         raise HTTPException(422, "A pergunta não pode ser vazia.")
+    if len(dados.pergunta) > PERGUNTA_MAXIMA:
+        raise HTTPException(422, f"A pergunta pode ter no máximo {PERGUNTA_MAXIMA} caracteres.")
 
     roteiro = None
     etapas = []
@@ -172,7 +175,7 @@ def listar_historico(
     session: Session = Depends(get_session),
     usuario: Usuario = Depends(usuario_atual),
 ):
-    exigir_proprio_ou_gerente(usuario, aluno_id)
+    exigir_acesso_ao_aluno(session, usuario, aluno_id)
     consulta = select(HistoricoInteracao).where(HistoricoInteracao.aluno_id == aluno_id)
     if roteiro_id is not None:
         consulta = consulta.where(HistoricoInteracao.roteiro_id == roteiro_id)

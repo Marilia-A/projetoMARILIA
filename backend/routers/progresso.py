@@ -19,13 +19,13 @@ from backend.schemas import (
     ProgressoLer,
     ProgressoResultado,
 )
-from backend.seguranca import exigir_proprio_ou_gerente, usuario_atual
+from backend.seguranca import exigir_acesso_ao_aluno, usuario_atual
 
 router = APIRouter(prefix="/alunos/{aluno_id}")
 
 
 def validar_aluno(session: Session, aluno_id: int, usuario: Usuario) -> None:
-    exigir_proprio_ou_gerente(usuario, aluno_id)
+    exigir_acesso_ao_aluno(session, usuario, aluno_id)
     aluno = session.get(Usuario, aluno_id)
     if not aluno or aluno.tipo != TipoUsuario.aluno:
         raise HTTPException(status_code=404, detail="Aluno não encontrado")

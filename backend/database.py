@@ -10,9 +10,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./marilia.db").strip()
 achado = re.search(r"(?:postgres(?:ql)?(?:\+\w+)?|sqlite)://[^\s'\"]+", DATABASE_URL)
 if achado:
     DATABASE_URL = achado.group(0)
-for prefixo in ("postgres://", "postgresql://"):
-    if DATABASE_URL.startswith(prefixo):
-        DATABASE_URL = "postgresql+psycopg://" + DATABASE_URL[len(prefixo):]
+DATABASE_URL = re.sub(r"^postgres(?:ql)?(?:\+\w+)?://", "postgresql+psycopg://", DATABASE_URL)
 
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
