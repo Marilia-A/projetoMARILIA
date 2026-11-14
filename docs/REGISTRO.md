@@ -65,7 +65,7 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
   - Professor pode consultar o próprio cadastro em `/usuarios/{id}` (antes recebia 403).
   - Testado com SQLite: 5×401 + 429; outro e-mail não é afetado; professor 200 no próprio cadastro e 403 no do admin; pergunta com 501 caracteres → 422.
 
-- Revisão do GitHub: descrições dos PRs #1 a #10 sem rodapés automáticos; branches temporários apagados; tags v1.0, v1.1 e v1.2 publicadas pela autora.
+- Revisão do GitHub: descrições dos PRs #1 a #10 sem rodapés automáticos; os dois branches de nome indevido foram apagados (os branches dos blocos continuam no GitHub); tags v1.0, v1.1 e v1.2 publicadas pela autora.
 - PR #10 – regra de autoria reescrita em texto neutro; v1.2 registrada.
 - Verificação de PRs passada para o chat "Verificar PR e Correções": revisar #1 a #10 e reportar qualquer falha de código (de qualquer nível) para correção posterior.
 
@@ -160,7 +160,17 @@ Três arquivos, cada um com o que é necessário para aquela parte. **Escritos e
 
 ### Falhas encontradas na verificação
 *(preenchido pelo chat "Verificar PR e Correções"; nada corrigido sem pedido da autora)*
-- Já conhecidas: limite de login some se o servidor reiniciar e permite bloquear o login de outra pessoa; professor vê a lista de todos os alunos (decisão); padrão `SEED_USUARIOS_TESTE=true` no código.
+Revisão de 13/11 dos PRs #1 a #11 (53 verificações automáticas passaram na `main` 4d14675):
+
+- 🔴 **`.gitignore` sem proteger `.env` e `dist/`** (linhas grudadas desde o PR #7) → corrigido no PR #12.
+- 🟠 **Committer dos merges pelo site**: merges dos PRs #5 a #10 (e o commit da v1.2) ficam com committer "GitHub" (padrão do botão de merge). Não reescrever o histórico; daqui para frente, merge local (`git merge --no-ff` + push) evita.
+- 🟠 **Limite de login usado contra outra pessoa**: 5 senhas erradas bloqueiam aquele e-mail por 15 min, mesmo com a senha certa depois; contagem em memória se perde quando o Render reinicia.
+- 🟡 Lista de falhas de login só cresce (e-mails inventados ficam guardados até o servidor reiniciar).
+- 🟡 `.env.example` com `DATABASE_URL` de Postgres ativa: quem copiar sem editar e não tiver Postgres não sobe a API.
+- 🟡 Imagens de itens excluídos/trocados continuam no banco.
+- 🟡 Regra "aluno de turma do professor" repetida em dois lugares (`seguranca.py` e `routers/usuarios.py`) → juntar numa função.
+- 🟡 `gerar_executavel.bat` ainda não testado no Windows.
+- Decisões já conhecidas: professor vê a lista de todos os alunos; padrão `SEED_USUARIOS_TESTE=true` no código.
 
 ### Melhorias opcionais
 - [ ] Dashboard com menos consultas por aluno
