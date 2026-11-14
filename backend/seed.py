@@ -398,7 +398,7 @@ def carregar_dados_iniciais():
             for dados in BADGES:
                 session.add(Badge(**dados))
 
-        if os.getenv("SEED_USUARIOS_TESTE", "true").lower() == "true":
+        if os.getenv("SEED_USUARIOS_TESTE", "false").lower() == "true":
             for dados in USUARIOS:
                 existe = session.exec(select(Usuario).where(Usuario.email == dados["email"])).first()
                 if not existe:

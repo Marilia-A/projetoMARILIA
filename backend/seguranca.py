@@ -81,14 +81,18 @@ def exigir_proprio_ou_gerente(usuario: Usuario, aluno_id: int):
         raise HTTPException(status_code=403, detail="Aluno só acessa os próprios dados")
 
 
+def aluno_do_professor(session: Session, aluno_id: int, professor_id: int) -> bool:
+    consulta = (
+        select(TurmaAluno)
+        .join(Turma, Turma.id == TurmaAluno.turma_id)
+        .where(TurmaAluno.aluno_id == aluno_id, Turma.professor_id == professor_id)
+    )
+    return session.exec(consulta).first() is not None
+
+
 def exigir_acesso_ao_aluno(session: Session, usuario: Usuario, aluno_id: int):
     exigir_proprio_ou_gerente(usuario, aluno_id)
     if usuario.tipo != TipoUsuario.professor or usuario.id == aluno_id:
         return
-    consulta = (
-        select(TurmaAluno)
-        .join(Turma, Turma.id == TurmaAluno.turma_id)
-        .where(TurmaAluno.aluno_id == aluno_id, Turma.professor_id == usuario.id)
-    )
-    if not session.exec(consulta).first():
+    if not aluno_do_professor(session, aluno_id, usuario.id):
         raise HTTPException(status_code=403, detail="Professor só acessa alunos das próprias turmas")

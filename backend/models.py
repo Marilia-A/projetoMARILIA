@@ -101,6 +101,13 @@ class Imagem(SQLModel, table=True):
     tipo: str
 
 
+class TentativaLogin(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    email: str = Field(index=True)
+    ip: str
+    data_hora: datetime = Field(index=True)
+
+
 class AlunoBadge(SQLModel, table=True):
     aluno_id: int = Field(foreign_key="usuario.id", primary_key=True)
     badge_id: int = Field(foreign_key="badge.id", primary_key=True)
