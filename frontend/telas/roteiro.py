@@ -64,15 +64,19 @@ def mostrar(page: ft.Page, roteiro_id: int):
         except api.ErroAPI:
             pass
 
-    capa = [ft.Text(roteiro["descricao"], size=16)]
+    capa = [ft.Text(roteiro["descricao"], size=17, color=c.TEXTO)]
     if roteiro["imagem"]:
         capa.append(c.imagem(roteiro["imagem"]))
-    capa.append(ft.Text("Materiais", size=18, weight=ft.FontWeight.BOLD))
-    capa.append(ft.Text(roteiro["materiais"], size=16))
+    capa.append(
+        ft.Row(
+            [ft.Icon(ft.Icons.INVENTORY_2, color=c.LARANJA), ft.Text("Materiais", size=19, weight=ft.FontWeight.BOLD, color=c.TEXTO)]
+        )
+    )
+    capa.append(ft.Text(roteiro["materiais"], size=17, color=c.TEXTO))
     paginas = [("O que vamos fazer", capa)]
 
     for etapa in roteiro["etapas"]:
-        conteudo = [ft.Text(etapa["conteudo"], size=16)]
+        conteudo = [ft.Text(etapa["conteudo"], size=17, color=c.TEXTO)]
         if etapa["imagem"]:
             conteudo.append(c.imagem(etapa["imagem"]))
         paginas.append((f"Passo {etapa['ordem']}", conteudo))
@@ -89,7 +93,12 @@ def mostrar(page: ft.Page, roteiro_id: int):
             (
                 "Sugestões de experimentos",
                 [
-                    ft.Text("Agora que o roteiro funcionou, que tal experimentar?", size=16),
+                    ft.Row(
+                        [
+                            ft.Icon(ft.Icons.AUTO_AWESOME, color=c.AMARELO),
+                            ft.Text("Agora que o roteiro funcionou, que tal experimentar?", size=17, color=c.TEXTO),
+                        ]
+                    ),
                     markdown(roteiro["sugestoes"]),
                 ],
             )
@@ -99,9 +108,9 @@ def mostrar(page: ft.Page, roteiro_id: int):
         value="superficial",
         content=ft.Row(
             [
-                ft.Radio(value="superficial", label="Superficial"),
+                ft.Radio(value="superficial", label="Superficial (curtinha)"),
                 ft.Radio(value="moderado", label="Moderado"),
-                ft.Radio(value="detalhado", label="Detalhado"),
+                ft.Radio(value="detalhado", label="Detalhado (completa)"),
             ]
         ),
     )
@@ -111,9 +120,27 @@ def mostrar(page: ft.Page, roteiro_id: int):
         min_lines=2,
         max_lines=5,
         max_length=500,
+        border_radius=14,
+        filled=True,
+        bgcolor=ft.Colors.WHITE,
+        text_size=16,
     )
-    carregando = ft.ProgressRing(width=24, height=24, visible=False)
+    carregando = ft.ProgressRing(width=24, height=24, visible=False, color=c.ROXO)
     resposta_tutor = markdown("")
+    bolha_resposta = ft.Container(
+        content=ft.Row(
+            [
+                c.circulo_icone(ft.Icons.SMART_TOY, c.ROXO, 44),
+                ft.Container(content=resposta_tutor, expand=True),
+            ],
+            vertical_alignment=ft.CrossAxisAlignment.START,
+            spacing=12,
+        ),
+        bgcolor="#EFEAFF",
+        border_radius=18,
+        padding=16,
+        visible=False,
+    )
 
     def perguntar(e):
         texto = (campo_pergunta.value or "").strip()
@@ -122,6 +149,7 @@ def mostrar(page: ft.Page, roteiro_id: int):
         botao_perguntar.disabled = True
         carregando.visible = True
         resposta_tutor.value = ""
+        bolha_resposta.visible = False
         page.update()
         try:
             resposta_tutor.value = api.perguntar_tutor(
@@ -135,21 +163,42 @@ def mostrar(page: ft.Page, roteiro_id: int):
             )
         botao_perguntar.disabled = False
         carregando.visible = False
+        bolha_resposta.visible = bool(resposta_tutor.value)
         page.update()
 
-    botao_perguntar = ft.FilledButton("Perguntar", on_click=perguntar)
+    botao_perguntar = c.botao_principal("Perguntar", ft.Icons.SEND, perguntar)
+
+    apresentacao = ft.Container(
+        content=ft.Row(
+            [
+                c.circulo_icone(ft.Icons.SMART_TOY, c.ROXO, 56),
+                ft.Text(
+                    "Oi! Eu sou a tutora do MARILIA. Escolha o nível da explicação e me pergunte "
+                    "o que quiser sobre este roteiro.",
+                    size=16,
+                    color=c.TEXTO,
+                    expand=True,
+                ),
+            ],
+            spacing=14,
+        ),
+        bgcolor="#EFEAFF",
+        border_radius=18,
+        padding=16,
+    )
 
     pagina_duvidas = [
-        ft.Text("Escolha o nível da explicação:", size=16),
+        apresentacao,
+        ft.Text("Escolha o nível da explicação:", size=17, weight=ft.FontWeight.BOLD, color=c.TEXTO),
         nivel,
         campo_pergunta,
         ft.Row([botao_perguntar, carregando]),
-        resposta_tutor,
+        bolha_resposta,
     ]
 
     if eh_aluno:
         texto_concluido = ft.Text(
-            "Roteiro concluído!", color=ft.Colors.GREEN, weight=ft.FontWeight.BOLD, size=16
+            "Roteiro concluído! Mandou bem!", color=c.VERDE, weight=ft.FontWeight.BOLD, size=18
         )
         aviso_erro = ft.Text("", color=ft.Colors.RED)
 
@@ -172,9 +221,7 @@ def mostrar(page: ft.Page, roteiro_id: int):
             if novas:
                 avisar_badges(page, novas)
 
-        botao_concluir = ft.FilledButton(
-            "Marcar como concluído", icon=ft.Icons.CHECK, on_click=concluir
-        )
+        botao_concluir = c.botao_principal("Marcar como concluído", ft.Icons.CHECK, concluir, cor=c.VERDE)
         ajustar_conclusao()
         pagina_duvidas += [ft.Divider(), botao_concluir, texto_concluido, aviso_erro]
 
@@ -189,21 +236,38 @@ def mostrar(page: ft.Page, roteiro_id: int):
     def desenhar():
         i = estado["atual"]
         nome, conteudo = paginas[i]
+        ultima = i == len(paginas) - 1
         c.mostrar(
             page,
-            ft.Row([c.botao_voltar("roteiros"), c.titulo(roteiro["titulo"])]),
-            ft.Text(nome, size=20, weight=ft.FontWeight.BOLD),
-            *conteudo,
+            c.cabecalho(roteiro["titulo"], ft.Icons.MEMORY, voltar="roteiros", subtitulo=nome),
+            ft.Row(
+                [
+                    ft.Text(f"Página {i + 1} de {len(paginas)}", size=15, color=c.TEXTO_SUAVE),
+                    ft.ProgressBar(
+                        value=(i + 1) / len(paginas), bar_height=10, border_radius=5,
+                        color=c.ROXO, bgcolor="#E4DCFF", expand=True,
+                    ),
+                ],
+                spacing=12,
+            ),
+            c.painel(
+                ft.Text(nome, size=22, weight=ft.FontWeight.BOLD, color=c.ROXO),
+                *conteudo,
+            ),
             ft.Row(
                 [
                     ft.OutlinedButton(
-                        "Voltar", disabled=i == 0, on_click=lambda e: mudar_pagina(-1)
+                        "Voltar",
+                        icon=ft.Icons.ARROW_BACK,
+                        disabled=i == 0,
+                        on_click=lambda e: mudar_pagina(-1),
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=14),
+                            padding=ft.Padding.symmetric(horizontal=22, vertical=16),
+                        ),
                     ),
-                    ft.Text(f"Página {i + 1} de {len(paginas)}"),
-                    ft.FilledButton(
-                        "Avançar",
-                        disabled=i == len(paginas) - 1,
-                        on_click=lambda e: mudar_pagina(1),
+                    c.botao_principal(
+                        "Avançar", ft.Icons.ARROW_FORWARD, lambda e: mudar_pagina(1), desativado=ultima
                     ),
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
