@@ -3,6 +3,7 @@ from sqlmodel import Session, col, or_, select
 
 from backend.database import get_session
 from backend.models import Etapa, Roteiro
+from backend.routers.upload import remover_imagens_sem_uso
 from backend.schemas import EtapaLer, RoteiroCriar, RoteiroLer, RoteiroResumo
 from backend.seguranca import gerente_atual, usuario_atual
 
@@ -65,16 +66,18 @@ def atualizar_roteiro(
     roteiro_id: int, dados: RoteiroCriar, session: Session = Depends(get_session)
 ):
     roteiro = buscar_ou_404(session, roteiro_id)
+    antigas = session.exec(select(Etapa).where(Etapa.roteiro_id == roteiro.id)).all()
+    imagens_antigas = [roteiro.imagem, *(e.imagem for e in antigas)]
     for campo, valor in dados.model_dump(exclude={"etapas"}).items():
         setattr(roteiro, campo, valor)
 
-    antigas = session.exec(select(Etapa).where(Etapa.roteiro_id == roteiro.id)).all()
     for etapa in antigas:
         session.delete(etapa)
     session.flush()
 
     for etapa in dados.etapas:
         session.add(Etapa(**etapa.model_dump(), roteiro_id=roteiro.id))
+    remover_imagens_sem_uso(session, imagens_antigas)
     session.commit()
     session.refresh(roteiro)
     return montar_resposta(session, roteiro)
@@ -82,5 +85,9 @@ def atualizar_roteiro(
 
 @router.delete("/{roteiro_id}", status_code=204, dependencies=[Depends(gerente_atual)])
 def excluir_roteiro(roteiro_id: int, session: Session = Depends(get_session)):
-    session.delete(buscar_ou_404(session, roteiro_id))
+    roteiro = buscar_ou_404(session, roteiro_id)
+    etapas = session.exec(select(Etapa).where(Etapa.roteiro_id == roteiro.id)).all()
+    imagens = [roteiro.imagem, *(e.imagem for e in etapas)]
+    session.delete(roteiro)
+    remover_imagens_sem_uso(session, imagens)
     session.commit()

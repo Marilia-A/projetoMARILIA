@@ -4,6 +4,7 @@ from sqlmodel import Session, col, or_, select
 
 from backend.database import get_session
 from backend.models import TermoGlossario
+from backend.routers.upload import remover_imagens_sem_uso
 from backend.schemas import TermoCriar, TermoLer
 from backend.seguranca import gerente_atual, usuario_atual
 
@@ -19,9 +20,10 @@ def buscar_ou_404(session: Session, termo_id: int) -> TermoGlossario:
     return termo
 
 
-def salvar(session: Session, termo: TermoGlossario) -> TermoGlossario:
+def salvar(session: Session, termo: TermoGlossario, imagem_antiga: str | None = None) -> TermoGlossario:
     session.add(termo)
     try:
+        remover_imagens_sem_uso(session, [imagem_antiga])
         session.commit()
     except IntegrityError:
         session.rollback()
@@ -59,12 +61,16 @@ def atualizar_termo(
     termo_id: int, dados: TermoCriar, session: Session = Depends(get_session)
 ):
     termo = buscar_ou_404(session, termo_id)
+    imagem_antiga = termo.imagem
     for campo, valor in dados.model_dump().items():
         setattr(termo, campo, valor)
-    return salvar(session, termo)
+    return salvar(session, termo, imagem_antiga)
 
 
 @router.delete("/{termo_id}", status_code=204, dependencies=[Depends(gerente_atual)])
 def excluir_termo(termo_id: int, session: Session = Depends(get_session)):
-    session.delete(buscar_ou_404(session, termo_id))
+    termo = buscar_ou_404(session, termo_id)
+    imagem = termo.imagem
+    session.delete(termo)
+    remover_imagens_sem_uso(session, [imagem])
     session.commit()

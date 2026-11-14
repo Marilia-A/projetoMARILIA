@@ -4,10 +4,10 @@ from typing import Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from backend.database import get_session
-from backend.models import Imagem
+from backend.models import Etapa, Imagem, Roteiro, TermoGlossario
 
 from backend.seguranca import gerente_atual
 
@@ -37,3 +37,17 @@ async def enviar_imagem(
     session.add(Imagem(caminho=caminho, conteudo=conteudo, tipo=tipo))
     session.commit()
     return {"caminho": caminho}
+
+
+def remover_imagens_sem_uso(session: Session, caminhos) -> None:
+    """Apaga do banco as imagens enviadas que nenhum roteiro, etapa ou termo usa mais."""
+    session.flush()
+    for caminho in {c for c in caminhos if c}:
+        em_uso = (
+            session.exec(select(Roteiro.id).where(Roteiro.imagem == caminho)).first()
+            or session.exec(select(Etapa.id).where(Etapa.imagem == caminho)).first()
+            or session.exec(select(TermoGlossario.id).where(TermoGlossario.imagem == caminho)).first()
+        )
+        registro = session.get(Imagem, caminho)
+        if registro and not em_uso:
+            session.delete(registro)

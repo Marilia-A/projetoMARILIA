@@ -1,37 +1,76 @@
-import time
-from collections import defaultdict, deque
+import math
+from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session, func, select
+from sqlmodel import Session, delete, func, select
 
 from backend.database import get_session
 from backend.models import (
     AlunoBadge,
     HistoricoInteracao,
     Progresso,
+    TentativaLogin,
     TipoUsuario,
     Turma,
     TurmaAluno,
     Usuario,
 )
 from backend.schemas import LoginDados, LoginResposta, UsuarioAtualizar, UsuarioCriar, UsuarioLer
-from backend.seguranca import admin_atual, criar_token, gerar_hash, gerente_atual, verificar_senha
+from backend.seguranca import (
+    admin_atual,
+    aluno_do_professor,
+    criar_token,
+    gerar_hash,
+    gerente_atual,
+    verificar_senha,
+)
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
-# Limite de tentativas de login (por e-mail, em memória: basta para um único servidor)
-TENTATIVAS_LOGIN = 5
-JANELA_LOGIN = 15 * 60  # segundos
-_falhas_login: dict[str, deque] = defaultdict(deque)
+# Limite de tentativas de login, guardado no banco (não se perde quando o servidor reinicia).
+# Conta por e-mail + endereço de quem tenta, para que errar a senha de outra pessoa
+# a partir de outro computador não bloqueie o login dela; o limite só por e-mail é mais alto
+# e serve de proteção extra contra tentativas vindas de vários endereços.
+TENTATIVAS_POR_ENDERECO = 5
+TENTATIVAS_POR_EMAIL = 20
+JANELA_LOGIN = timedelta(minutes=15)
 
 
-def _falhas_recentes(email: str) -> deque:
-    falhas = _falhas_login[email]
-    agora = time.monotonic()
-    while falhas and agora - falhas[0] > JANELA_LOGIN:
-        falhas.popleft()
-    return falhas
+def _agora() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _utc(momento: datetime) -> datetime:
+    # o SQLite devolve a data sem fuso; o horário gravado é sempre UTC
+    return momento if momento.tzinfo else momento.replace(tzinfo=timezone.utc)
+
+
+def ip_do_cliente(request: Request) -> str:
+    # Atrás do proxy do Render, o último endereço do X-Forwarded-For é o que o proxy viu.
+    encaminhado = request.headers.get("x-forwarded-for")
+    if encaminhado:
+        return encaminhado.split(",")[-1].strip()
+    return request.client.host if request.client else "desconhecido"
+
+
+def _bloqueio(session: Session, email: str, ip: str) -> int | None:
+    """Apaga tentativas antigas e devolve os minutos de espera, ou None se não houver bloqueio."""
+    limite = _agora() - JANELA_LOGIN
+    session.exec(delete(TentativaLogin).where(TentativaLogin.data_hora < limite))
+    session.commit()
+    regras = (
+        (TENTATIVAS_POR_ENDERECO, (TentativaLogin.email == email, TentativaLogin.ip == ip)),
+        (TENTATIVAS_POR_EMAIL, (TentativaLogin.email == email,)),
+    )
+    for maximo, filtros in regras:
+        total, mais_antiga = session.exec(
+            select(func.count(), func.min(TentativaLogin.data_hora)).where(*filtros)
+        ).one()
+        if total >= maximo:
+            restante = (_utc(mais_antiga) + JANELA_LOGIN - _agora()).total_seconds()
+            return max(1, math.ceil(restante / 60))
+    return None
 
 
 def buscar_ou_404(session: Session, usuario_id: int) -> Usuario:
@@ -43,15 +82,6 @@ def buscar_ou_404(session: Session, usuario_id: int) -> Usuario:
 
 def tem_turmas(session: Session, usuario_id: int) -> bool:
     return session.exec(select(Turma).where(Turma.professor_id == usuario_id)).first() is not None
-
-
-def aluno_do_professor(session: Session, aluno_id: int, professor_id: int) -> bool:
-    consulta = (
-        select(TurmaAluno)
-        .join(Turma, Turma.id == TurmaAluno.turma_id)
-        .where(TurmaAluno.aluno_id == aluno_id, Turma.professor_id == professor_id)
-    )
-    return session.exec(consulta).first() is not None
 
 
 def salvar(session: Session, usuario: Usuario) -> Usuario:
@@ -82,21 +112,24 @@ def criar_usuario(
 
 
 @router.post("/login", response_model=LoginResposta)
-def login(dados: LoginDados, session: Session = Depends(get_session)):
+def login(dados: LoginDados, request: Request, session: Session = Depends(get_session)):
     email = dados.email.strip().lower()
-    falhas = _falhas_recentes(email)
-    if len(falhas) >= TENTATIVAS_LOGIN:
-        minutos = max(1, round((JANELA_LOGIN - (time.monotonic() - falhas[0])) / 60))
+    ip = ip_do_cliente(request)
+    minutos = _bloqueio(session, email, ip)
+    if minutos is not None:
         raise HTTPException(
             status_code=429,
             detail=f"Muitas tentativas de login. Aguarde {minutos} minuto(s) e tente de novo.",
         )
     usuario = session.exec(select(Usuario).where(func.lower(Usuario.email) == email)).first()
     if not usuario or not verificar_senha(dados.senha, usuario.senha_hash):
-        falhas.append(time.monotonic())
+        session.add(TentativaLogin(email=email, ip=ip, data_hora=_agora()))
+        session.commit()
         raise HTTPException(status_code=401, detail="E-mail ou senha inválidos")
-    _falhas_login.pop(email, None)
-    return LoginResposta(**usuario.model_dump(exclude={"senha_hash"}), access_token=criar_token(usuario))
+    resposta = LoginResposta(**usuario.model_dump(exclude={"senha_hash"}), access_token=criar_token(usuario))
+    session.exec(delete(TentativaLogin).where(TentativaLogin.email == email, TentativaLogin.ip == ip))
+    session.commit()
+    return resposta
 
 
 @router.get("", response_model=list[UsuarioLer])
