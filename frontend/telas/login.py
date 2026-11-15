@@ -1,3 +1,5 @@
+import threading
+
 import flet as ft
 
 import api
@@ -27,21 +29,51 @@ def mostrar(page: ft.Page, aviso: str | None = None):
     if mensagem:
         aviso.value = mensagem
 
+    botao_entrar = c.botao_principal("Entrar", ft.Icons.ROCKET_LAUNCH, None, largura=380)
+    aguarde = ft.Text(
+        "Entrando... Se o servidor estava desligado, o primeiro acesso pode levar até 1 minuto.",
+        size=14,
+        color=c.TEXTO_SUAVE,
+        text_align=ft.TextAlign.CENTER,
+        width=380,
+        visible=False,
+    )
+    # Um login por vez: cliques repetidos (ou Enter) enquanto espera a API são ignorados,
+    # para não contar várias tentativas erradas de uma vez no limite de login.
+    trava = threading.Lock()
+
+    def aguardando(sim: bool):
+        botao_entrar.disabled = sim
+        botao_entrar.content = "Entrando..." if sim else "Entrar"
+        campo_email.disabled = sim
+        campo_senha.disabled = sim
+        aguarde.visible = sim
+        page.update()
+
     def entrar(e):
-        email = (campo_email.value or "").strip()
-        senha = campo_senha.value or ""
-        if not email or not senha:
-            aviso.value = "Informe e-mail e senha."
-            page.update()
+        if not trava.acquire(blocking=False):
             return
         try:
-            usuario = api.login(email, senha)
-        except api.ErroAPI as erro:
-            aviso.value = "E-mail ou senha inválidos." if erro.status == 401 else erro.mensagem
-            page.update()
-            return
-        sessao.entrar(usuario)
-        navegacao.ir("roteiros")
+            email = (campo_email.value or "").strip()
+            senha = campo_senha.value or ""
+            if not email or not senha:
+                aviso.value = "Informe e-mail e senha."
+                page.update()
+                return
+            aviso.value = ""
+            aguardando(True)
+            try:
+                usuario = api.login(email, senha)
+            except api.ErroAPI as erro:
+                aviso.value = "E-mail ou senha inválidos." if erro.status == 401 else erro.mensagem
+                aguardando(False)
+                return
+            sessao.entrar(usuario)
+            navegacao.ir("roteiros")
+        finally:
+            trava.release()
+
+    botao_entrar.on_click = entrar
 
     campo_senha.on_submit = entrar
 
@@ -69,7 +101,8 @@ def mostrar(page: ft.Page, aviso: str | None = None):
                 campo_email,
                 campo_senha,
                 aviso,
-                c.botao_principal("Entrar", ft.Icons.ROCKET_LAUNCH, entrar, largura=380),
+                aguarde,
+                botao_entrar,
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=14,
