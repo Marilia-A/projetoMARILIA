@@ -1,4 +1,4 @@
-import threading
+import asyncio
 
 import flet as ft
 
@@ -38,11 +38,14 @@ def mostrar(page: ft.Page, aviso: str | None = None):
         width=380,
         visible=False,
     )
-    # Um login por vez: cliques repetidos (ou Enter) enquanto espera a API são ignorados,
+    # O clique é assíncrono e o pedido à API roda em segundo plano (asyncio.to_thread).
+    # Assim a janela continua livre para mostrar o "Entrando..." enquanto espera.
+    # Um login por vez: cliques repetidos (ou Enter) durante a espera são ignorados,
     # para não contar várias tentativas erradas de uma vez no limite de login.
-    trava = threading.Lock()
+    estado = {"entrando": False}
 
     def aguardando(sim: bool):
+        estado["entrando"] = sim
         botao_entrar.disabled = sim
         botao_entrar.content = "Entrando..." if sim else "Entrar"
         campo_email.disabled = sim
@@ -50,28 +53,29 @@ def mostrar(page: ft.Page, aviso: str | None = None):
         aguarde.visible = sim
         page.update()
 
-    def entrar(e):
-        if not trava.acquire(blocking=False):
+    async def entrar(e):
+        if estado["entrando"]:
             return
+        email = (campo_email.value or "").strip()
+        senha = campo_senha.value or ""
+        if not email or not senha:
+            aviso.value = "Informe e-mail e senha."
+            page.update()
+            return
+        aviso.value = ""
+        aguardando(True)
         try:
-            email = (campo_email.value or "").strip()
-            senha = campo_senha.value or ""
-            if not email or not senha:
-                aviso.value = "Informe e-mail e senha."
-                page.update()
-                return
-            aviso.value = ""
-            aguardando(True)
-            try:
-                usuario = api.login(email, senha)
-            except api.ErroAPI as erro:
-                aviso.value = "E-mail ou senha inválidos." if erro.status == 401 else erro.mensagem
-                aguardando(False)
-                return
-            sessao.entrar(usuario)
-            navegacao.ir("roteiros")
-        finally:
-            trava.release()
+            usuario = await asyncio.to_thread(api.login, email, senha)
+        except api.ErroAPI as erro:
+            aviso.value = "E-mail ou senha inválidos." if erro.status == 401 else erro.mensagem
+            aguardando(False)
+            return
+        except Exception:
+            aviso.value = "Não foi possível entrar. Tente de novo."
+            aguardando(False)
+            return
+        sessao.entrar(usuario)
+        navegacao.ir("roteiros")
 
     botao_entrar.on_click = entrar
 

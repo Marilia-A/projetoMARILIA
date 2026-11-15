@@ -112,6 +112,9 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
   - login: enquanto espera a API, o botão vira "Entrando...", fica desativado junto com os campos e aparece o aviso de que o primeiro acesso pode levar até 1 minuto (servidor dormindo). Cliques repetidos e Enter são ignorados até a resposta, então não contam várias tentativas erradas de uma vez no limite de login (antes, 5 cliques com a senha errada bloqueavam o e-mail por 15 min);
   - `gerar_executavel.bat`: versão do arquivo de 1.2.0 para 1.6.0;
   - testado (simulado, sem janela): 5 cliques + Enter durante a espera geraram 1 pedido à API; botão e campos voltam ao normal depois do erro; login certo vai para os roteiros. Falta: conferir na janela do app.
+- PRs #20 e #21 mesclados pelo botão do site (`18fe84b` e `e1c8a8c`, committer "GitHub").
+- **Bloco 15 não funcionou na janela** (a autora não viu o "Entrando..."): no Flet 0.86, um clique com função comum (sem `async`) trava a janela até terminar, então nada aparece antes da resposta da API, e os cliques extras ficam na fila e viram logins seguidos. O teste do Bloco 15 era simulado, sem a janela, e não pegou isso.
+- **Bloco 16 – login assíncrono** (branch `bloco-16-login-assincrono`): o clique do login virou `async` e o pedido à API roda em segundo plano (`asyncio.to_thread`); a janela fica livre para mostrar o aviso, e os cliques durante a espera são ignorados. Testado **na janela** (Flet no navegador, API falsa com 3–5 s de espera): aparecem o "Entrando..." e o aviso; 5 cliques geraram 1 login (o código do Bloco 15 gerou 5, igual ao print do Neon da autora); a senha errada volta com a mensagem de erro; o login certo abre a tela de roteiros.
 - Próximo passo: gerar e testar o `MARILIA.exe` no Windows.
 
 ---
