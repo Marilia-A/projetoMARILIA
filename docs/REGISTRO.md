@@ -3,7 +3,7 @@
 Diário do que foi feito no software, blocos de correções, decisões e pendências.
 Atualizado a cada etapa. (Itens de texto do TCC ficam no checklist pessoal; aqui só aparecem quando dependem do software.)
 
-Última atualização: **14/11/2026**
+Última atualização: **15/11/2026**
 
 ---
 
@@ -25,8 +25,10 @@ Atualizado a cada etapa. (Itens de texto do TCC ficam no checklist pessoal; aqui
 | v1.0 | `8bd3ab4` | Antes das correções da análise de código |
 | v1.1 | `970d7c3` | Blocos 1 a 3 + DATABASE_URL + admin do seed (PRs #1 a #4) |
 | v1.2 | `5d6b100` | Blocos 4 e 5 – front na nuvem + executável; acesso do professor, upload, limites (PRs #5, #6 e os PRs de 13/11) |
-| v1.3 | *a criar após o merge dos Blocos 8 e 9* | Correções da verificação (limite de login no banco, limpeza de imagens, usuários de teste desligados por padrão) + READMEs completos |
-| v1.4 | *reservada* | Bloco 10 – visual infantil |
+| v1.3 | `1d547b2` | Correções da verificação (limite de login no banco, limpeza de imagens, usuários de teste desligados por padrão) + READMEs completos |
+| v1.3.1 | `caf7b48` | Limite de login na nuvem pelo endereço real (PR #15) |
+| v1.4 | `65cb8cf` *(a criar pela autora)* | Blocos 10 e 11 – visual infantil + usuários de demonstração. **Guarda o visual de antes do Bloco 12.** |
+| v1.5 | *reservada* | Bloco 12 – telas de gerenciamento no tema, rodapé fixo no roteiro e robôs interativos |
 
 Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blocos já mesclados no `main`.
 
@@ -86,6 +88,18 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
 - **Bloco 11 – usuários de demonstração** (branch `bloco-11-usuarios-demonstracao`): professor e aluno criados por `DEMO_PROFESSOR_*`/`DEMO_ALUNO_*` (senhas só no servidor), já ligados à "Turma de Demonstração"; admin continua sendo só o do `ADMIN_*`. Testado: 14 verificações, incluindo cadastro bloqueado para quem não é admin (401/403).
 - **Bloco 10 – visual infantil** (branch `bloco-10-visual`): tema em Flet com paleta colorida (roxo, azul, laranja, verde, rosa, amarelo), cabeçalho em faixa colorida, cartões arredondados com ícone, botões grandes, login com logo, tutor com balão de conversa, conquistas em troféus, dashboard com cartões de resumo. Telas do professor/admin herdam o tema. Testado: 21 telas montadas com dados reais da API + navegação por todas as páginas do roteiro + balão do tutor. Falta: teste visual no Windows e prints.
 - **Bloco 9 – documentação** (branch `bloco-9-documentacao`): READMEs com a sigla, a autoria e o comportamento do Bloco 8; registro atualizado; renumeração (Bloco 10 = visual).
+- PRs #16 e #17 mesclados pelo botão do site (committer "GitHub"); daqui para frente, voltar ao merge local.
+
+### 15/11/2026
+- **Verificação geral**: `main` testado localmente (13/13); API no Render e banco no Neon respondendo (raiz 200, rotas protegidas 401, login consultando o banco em 0,7–0,9 s, imagem servida do banco). Primeiro acesso com o servidor dormindo: ~33 s. O ping do GitHub Actions roda só a cada 4–6 h (o GitHub atrasa agendamentos de 10 min), então não mantém a API acordada.
+- **Contas de teste criadas pela autora** (aluno e professor): 51 verificações em todas as rotas, todas funcionando (permissões 401/403 corretas, tutor respondendo, turma/roteiro/termo/imagem temporários criados e apagados). As variáveis `DEMO_*` não estão no Render.
+- **Bloco 12 – ajustes visuais e robôs interativos** (branch `bloco-12-ajustes-visuais`):
+  - Turmas, detalhe da turma, formulários e gerenciamento de roteiros, glossário e usuários passam a usar o tema (cabeçalho colorido, cartões, botões e campos arredondados, campos na largura do painel);
+  - roteiro: **Voltar/Avançar fixos no rodapé** (antes mudavam de altura a cada página); a página volta ao topo ao trocar; texto da tutora e das sugestões em 17 px; campo de pergunta mais largo;
+  - dashboard com vírgula decimal ("1,0 de 5");
+  - `frontend/robos.py`: robô desenhado com formas do Flet; mascote que acena/fala no login, na tela inicial e nas conquistas; uma brincadeira por roteiro na primeira página (lâmpada, semáforo, botão, dia/noite com LDR, alarme com PIR); cabeça do robô na tutora; robô que comemora ao concluir;
+  - animações seguras: trocar de tela no meio de uma animação não trava o app;
+  - testado com a API local (SQLite): telas de aluno, professor e admin; as 5 brincadeiras clicadas; aviso de nova conquista depois da comemoração. Falta: teste no Windows (`.exe`).
 
 ---
 
@@ -112,7 +126,10 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
 
 ### Configuração na nuvem (sem código)
 - [ ] Testar o login do admin no Swagger (`/docs` → `POST /usuarios/login`).
-- [ ] **CRÍTICO**: `SEED_USUARIOS_TESTE=false` no Render; excluir `admin@teste.com` pelo app; trocar a senha do aluno/professor de teste (o repositório é público e mostra a senha padrão).
+- [x] **CRÍTICO**: `SEED_USUARIOS_TESTE=false` no Render; usuários de teste excluídos (14/11, verificação 61/62).
+- [ ] Trocar a senha (123456) das contas de teste criadas pelo app em 15/11 antes da banca.
+- [ ] Criar as variáveis `DEMO_*` no Render (ou usar as contas de teste no lugar delas).
+- [ ] No dia da apresentação, acordar a API ~2 min antes (abrir o endereço ou Actions → Run workflow).
 - [x] Padrão de `SEED_USUARIOS_TESTE` mudado para `false` no código (Bloco 8). Mesmo assim, conferir no painel do Render.
 
 ### Bloco 4 – front na nuvem + executável → tag v1.2
@@ -169,9 +186,11 @@ Três arquivos, cada um com o que é necessário para aquela parte. **Escritos e
 - PRs acompanhados automaticamente (comentários, revisões e CI).
 
 ### Para fazer mais tarde (agendado)
-- [ ] **Bloco 10 – visual infantil** no Flet (cores, ícones, telas mais atrativas) + prints das telas (roteiro, tutor, dashboard) para o 6.2 e para o README do front.
+- [x] **Bloco 10 – visual infantil** no Flet (PR #17) + Bloco 12 (gerenciamento no tema e robôs interativos).
+- [ ] Prints das telas (roteiro com brincadeira, tutor, dashboard) para o 6.2 e para o README do front — depois do Bloco 12.
 - [ ] Testar o `MARILIA.exe` no Windows contra a nuvem (de preferência em outro PC).
-- [ ] Item CRÍTICO no Render (`SEED_USUARIOS_TESTE=false`, excluir `admin@teste.com`, trocar senhas de teste).
+- [x] Item CRÍTICO no Render (14/11).
+- [ ] Tags: v1.4 em `65cb8cf` **antes** de mesclar o Bloco 12; v1.5 depois.
 - [x] Preencher nos READMEs: sigla do MARILIA, orientação/instituição (Bloco 9).
 - [x] Padronizar os nomes dos roteiros entre texto e `backend/seed.py` (o texto do TCC passou a usar os nomes do app, 14/11) ("Luz Noturna Automática" × "Luz Noturna com LDR"; "Alarme com Sensor de Presença" × "Alarme com Sensor PIR").
 - [x] Corrigir as falhas que a verificação dos PRs apontou (Bloco 8, PR #13).
@@ -196,7 +215,7 @@ Revisão de 13/11 dos PRs #1 a #11 (53 verificações automáticas passaram na `
 - [x] Mensagem "tutor ocupado" no app (13/11)
 - [ ] Progresso único por aluno/roteiro no banco (restrição de unicidade)
 - [ ] Recriar o serviço do Render na região Virginia (banco está na Virginia) se o dashboard ficar lento
-- [ ] Visual infantil no Flet + prints das telas para o TCC (6.2) → Bloco 10
+- [x] Visual infantil no Flet → Blocos 10 e 12
 - [x] Padrão de `SEED_USUARIOS_TESTE` = `false` no código (Bloco 8)
 
 ### Dependências do texto do TCC ligadas ao software

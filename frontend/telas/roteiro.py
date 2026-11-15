@@ -3,10 +3,16 @@ import flet as ft
 import api
 import componentes as c
 import navegacao
+import robos
 import sessao
 
 ESTILO_CODIGO = ft.MarkdownStyleSheet(
     code_text_style=ft.TextStyle(font_family="Consolas", size=15)
+)
+# Texto do tutor e das sugestões no mesmo tamanho do resto do roteiro.
+ESTILO_TEXTO = ft.MarkdownStyleSheet(
+    p_text_style=ft.TextStyle(size=17, color=c.TEXTO),
+    list_bullet_text_style=ft.TextStyle(size=17, color=c.TEXTO),
 )
 
 
@@ -17,6 +23,7 @@ def markdown(texto: str) -> ft.Markdown:
         extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
         code_theme=ft.MarkdownCodeTheme.ATOM_ONE_DARK,
         code_style_sheet=ESTILO_CODIGO,
+        md_style_sheet=ESTILO_TEXTO,
     )
 
 
@@ -65,8 +72,22 @@ def mostrar(page: ft.Page, roteiro_id: int):
             pass
 
     capa = [ft.Text(roteiro["descricao"], size=17, color=c.TEXTO)]
+    # Imagem do circuito e brincadeira do robô lado a lado (um embaixo do outro em janela estreita).
+    brincadeira = robos.brincadeira_para(roteiro["titulo"])
     if roteiro["imagem"]:
-        capa.append(c.imagem(roteiro["imagem"]))
+        capa.append(
+            ft.ResponsiveRow(
+                [
+                    ft.Container(c.imagem(roteiro["imagem"]), col={"xs": 12, "md": 5}, alignment=ft.Alignment.CENTER),
+                    ft.Container(brincadeira, col={"xs": 12, "md": 7}),
+                ],
+                spacing=16,
+                run_spacing=16,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            )
+        )
+    else:
+        capa.append(brincadeira)
     capa.append(
         ft.Row(
             [ft.Icon(ft.Icons.INVENTORY_2, color=c.LARANJA), ft.Text("Materiais", size=19, weight=ft.FontWeight.BOLD, color=c.TEXTO)]
@@ -114,23 +135,21 @@ def mostrar(page: ft.Page, roteiro_id: int):
             ]
         ),
     )
-    campo_pergunta = ft.TextField(
-        label="Escreva sua dúvida sobre este roteiro",
+    campo_pergunta = c.campo(
+        "Escreva sua dúvida sobre este roteiro",
         multiline=True,
-        min_lines=2,
-        max_lines=5,
+        min_lines=3,
+        max_lines=6,
         max_length=500,
-        border_radius=14,
-        filled=True,
-        bgcolor=ft.Colors.WHITE,
-        text_size=16,
+        text_size=17,
+        expand=True,
     )
     carregando = ft.ProgressRing(width=24, height=24, visible=False, color=c.ROXO)
     resposta_tutor = markdown("")
     bolha_resposta = ft.Container(
         content=ft.Row(
             [
-                c.circulo_icone(ft.Icons.SMART_TOY, c.ROXO, 44),
+                robos.cabeca_tutora(48),
                 ft.Container(content=resposta_tutor, expand=True),
             ],
             vertical_alignment=ft.CrossAxisAlignment.START,
@@ -171,11 +190,11 @@ def mostrar(page: ft.Page, roteiro_id: int):
     apresentacao = ft.Container(
         content=ft.Row(
             [
-                c.circulo_icone(ft.Icons.SMART_TOY, c.ROXO, 56),
+                robos.cabeca_tutora(64),
                 ft.Text(
                     "Oi! Eu sou a tutora do MARILIA. Escolha o nível da explicação e me pergunte "
                     "o que quiser sobre este roteiro.",
-                    size=16,
+                    size=17,
                     color=c.TEXTO,
                     expand=True,
                 ),
@@ -191,14 +210,21 @@ def mostrar(page: ft.Page, roteiro_id: int):
         apresentacao,
         ft.Text("Escolha o nível da explicação:", size=17, weight=ft.FontWeight.BOLD, color=c.TEXTO),
         nivel,
-        campo_pergunta,
+        ft.Row([campo_pergunta]),
         ft.Row([botao_perguntar, carregando]),
         bolha_resposta,
     ]
 
     if eh_aluno:
-        texto_concluido = ft.Text(
-            "Roteiro concluído! Mandou bem!", color=c.VERDE, weight=ft.FontWeight.BOLD, size=18
+        robo_festa = robos.Robo(c.VERDE, 0.55, dica="Parabéns!")
+        robo_festa.sorriso(True)
+        robo_festa.luz_peito(c.AMARELO)
+        texto_concluido = ft.Row(
+            [
+                robo_festa.controle,
+                ft.Text("Roteiro concluído! Mandou bem!", color=c.VERDE, weight=ft.FontWeight.BOLD, size=20),
+            ],
+            spacing=12,
         )
         aviso_erro = ft.Text("", color=ft.Colors.RED)
 
@@ -207,7 +233,7 @@ def mostrar(page: ft.Page, roteiro_id: int):
             botao_concluir.visible = not concluido
             texto_concluido.visible = concluido
 
-        def concluir(e):
+        async def concluir(e):
             novas = []
             try:
                 resultado = api.atualizar_progresso(usuario["id"], roteiro_id, "concluido")
@@ -218,6 +244,9 @@ def mostrar(page: ft.Page, roteiro_id: int):
                 aviso_erro.value = erro.mensagem
             ajustar_conclusao()
             page.update()
+            if progresso["status"] == "concluido":
+                for _ in range(3):
+                    await robo_festa.pular()
             if novas:
                 avisar_badges(page, novas)
 
@@ -254,18 +283,10 @@ def mostrar(page: ft.Page, roteiro_id: int):
                 ft.Text(nome, size=22, weight=ft.FontWeight.BOLD, color=c.ROXO),
                 *conteudo,
             ),
-            ft.Row(
+            # Voltar/Avançar ficam sempre no mesmo lugar, fixos no rodapé da janela.
+            rodape=ft.Row(
                 [
-                    ft.OutlinedButton(
-                        "Voltar",
-                        icon=ft.Icons.ARROW_BACK,
-                        disabled=i == 0,
-                        on_click=lambda e: mudar_pagina(-1),
-                        style=ft.ButtonStyle(
-                            shape=ft.RoundedRectangleBorder(radius=14),
-                            padding=ft.Padding.symmetric(horizontal=22, vertical=16),
-                        ),
-                    ),
+                    c.botao_secundario("Voltar", ft.Icons.ARROW_BACK, lambda e: mudar_pagina(-1), desativado=i == 0),
                     c.botao_principal(
                         "Avançar", ft.Icons.ARROW_FORWARD, lambda e: mudar_pagina(1), desativado=ultima
                     ),
@@ -273,5 +294,6 @@ def mostrar(page: ft.Page, roteiro_id: int):
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             ),
         )
+        page.run_task(page.scroll_to, offset=0, duration=0)
 
     desenhar()

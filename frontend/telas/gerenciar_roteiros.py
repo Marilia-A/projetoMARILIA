@@ -6,7 +6,8 @@ import navegacao
 
 
 def mostrar(page: ft.Page):
-    cabecalho = ft.Row([c.botao_voltar("roteiros"), c.titulo("Gerenciar roteiros")])
+    cabecalho = c.cabecalho("Gerenciar roteiros", ft.Icons.SETTINGS, voltar="roteiros",
+                            subtitulo="Crie, edite ou exclua os roteiros do app")
     try:
         roteiros = api.listar_roteiros()
     except api.ErroAPI as erro:
@@ -32,16 +33,16 @@ def mostrar(page: ft.Page):
                 "nesse roteiro também será apagado.",
                 lambda: excluir(r["id"]),
             ),
+            icone=ft.Icons.MEMORY,
+            cor=c.CORES_CARTOES[i % len(c.CORES_CARTOES)],
         )
-        for r in roteiros
+        for i, r in enumerate(roteiros)
     ]
     c.mostrar(
         page,
         cabecalho,
-        ft.FilledButton(
-            "Novo roteiro", icon=ft.Icons.ADD, on_click=lambda e: navegacao.ir("formulario_roteiro")
-        ),
-        *(linhas or [ft.Text("Nenhum roteiro cadastrado.")]),
+        ft.Row([c.botao_principal("Novo roteiro", ft.Icons.ADD, lambda e: navegacao.ir("formulario_roteiro"))]),
+        *(linhas or [ft.Text("Nenhum roteiro cadastrado.", size=16, color=c.TEXTO_SUAVE)]),
     )
 
 
@@ -60,22 +61,22 @@ def formulario(page: ft.Page, roteiro_id: int | None = None):
 
     aviso = c.aviso_erro()
 
-    campo_titulo = ft.TextField(label="Título", value=dados.get("titulo", ""))
-    campo_descricao = ft.TextField(
-        label="Descrição", value=dados.get("descricao", ""), multiline=True, min_lines=2
+    campo_titulo = c.campo("Título", value=dados.get("titulo", ""))
+    campo_descricao = c.campo(
+        "Descrição", value=dados.get("descricao", ""), multiline=True, min_lines=2
     )
-    campo_materiais = ft.TextField(
-        label="Materiais", value=dados.get("materiais", ""), multiline=True, min_lines=2
+    campo_materiais = c.campo(
+        "Materiais", value=dados.get("materiais", ""), multiline=True, min_lines=2
     )
-    campo_codigo = ft.TextField(
-        label="Código comentado",
+    campo_codigo = c.campo(
+        "Código comentado",
         value=dados.get("codigo_comentado", ""),
         multiline=True,
         min_lines=6,
         text_style=ft.TextStyle(font_family="Consolas"),
     )
-    campo_sugestoes = ft.TextField(
-        label="Sugestões de experimentos (opcional, uma por linha começando com -)",
+    campo_sugestoes = c.campo(
+        "Sugestões de experimentos (opcional, uma por linha começando com -)",
         value=dados.get("sugestoes") or "",
         multiline=True,
         min_lines=3,
@@ -83,7 +84,7 @@ def formulario(page: ft.Page, roteiro_id: int | None = None):
     imagem_roteiro = c.seletor_imagem(page, dados.get("imagem"), "roteiros", aviso)
 
     etapas = []
-    coluna_etapas = ft.Column()
+    coluna_etapas = ft.Column(horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
 
     def desenhar_etapas():
         for i, et in enumerate(etapas, start=1):
@@ -97,20 +98,22 @@ def formulario(page: ft.Page, roteiro_id: int | None = None):
 
     def adicionar_etapa(conteudo="", caminho=None):
         et = {
-            "rotulo": ft.Text(weight=ft.FontWeight.BOLD),
-            "campo": ft.TextField(label="Conteúdo", value=conteudo, multiline=True, min_lines=2),
+            "rotulo": ft.Text(weight=ft.FontWeight.BOLD, size=17, color=c.ROXO),
+            "campo": c.campo("Conteúdo", value=conteudo, multiline=True, min_lines=2),
             "imagem": c.seletor_imagem(page, caminho, "roteiros", aviso),
         }
-        et["cartao"] = ft.Card(
-            content=ft.Container(
-                padding=10,
-                content=ft.Column(
+        et["cartao"] = ft.Container(
+            bgcolor="#EFEAFF",
+            border_radius=16,
+            padding=14,
+            content=ft.Column(
                     [
                         ft.Row(
                             [
                                 et["rotulo"],
                                 ft.IconButton(
                                     icon=ft.Icons.DELETE,
+                                    icon_color=ft.Colors.RED_400,
                                     tooltip="Remover passo",
                                     on_click=lambda e: remover_etapa(et),
                                 ),
@@ -119,9 +122,9 @@ def formulario(page: ft.Page, roteiro_id: int | None = None):
                         ),
                         et["campo"],
                         et["imagem"][0],
-                    ]
-                ),
-            )
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+            ),
         )
         etapas.append(et)
 
@@ -173,29 +176,24 @@ def formulario(page: ft.Page, roteiro_id: int | None = None):
 
     c.mostrar(
         page,
-        ft.Row(
-            [
-                c.botao_voltar("gerenciar_roteiros"),
-                c.titulo("Editar roteiro" if roteiro_id else "Novo roteiro"),
-            ]
+        c.cabecalho("Editar roteiro" if roteiro_id else "Novo roteiro", ft.Icons.EDIT_NOTE,
+                    voltar="gerenciar_roteiros"),
+        c.painel(
+            campo_titulo,
+            campo_descricao,
+            campo_materiais,
+            ft.Text("Imagem do roteiro", size=16, weight=ft.FontWeight.BOLD, color=c.TEXTO),
+            imagem_roteiro[0],
+            campo_codigo,
+            esticar=True,
         ),
-        campo_titulo,
-        campo_descricao,
-        campo_materiais,
-        ft.Text("Imagem do roteiro", weight=ft.FontWeight.BOLD),
-        imagem_roteiro[0],
-        campo_codigo,
-        ft.Text("Passos", size=20, weight=ft.FontWeight.BOLD),
-        coluna_etapas,
-        ft.OutlinedButton("Adicionar passo", icon=ft.Icons.ADD, on_click=novo_passo),
-        campo_sugestoes,
+        c.painel(
+            ft.Text("Passos", size=20, weight=ft.FontWeight.BOLD, color=c.TEXTO),
+            coluna_etapas,
+            ft.Row([c.botao_secundario("Adicionar passo", ft.Icons.ADD, novo_passo)]),
+            esticar=True,
+        ),
+        c.painel(campo_sugestoes, esticar=True),
         aviso,
-        ft.Row(
-            [
-                ft.OutlinedButton(
-                    "Cancelar", on_click=lambda e: navegacao.ir("gerenciar_roteiros")
-                ),
-                ft.FilledButton("Salvar", icon=ft.Icons.SAVE, on_click=salvar),
-            ]
-        ),
+        c.botoes_salvar(lambda e: navegacao.ir("gerenciar_roteiros"), salvar),
     )

@@ -6,7 +6,8 @@ import navegacao
 
 
 def mostrar(page: ft.Page):
-    cabecalho = ft.Row([c.botao_voltar("glossario"), c.titulo("Gerenciar glossário")])
+    cabecalho = c.cabecalho("Gerenciar glossário", ft.Icons.MENU_BOOK, voltar="glossario",
+                            subtitulo="Termos que os alunos consultam")
     try:
         termos = api.listar_termos()
     except api.ErroAPI as erro:
@@ -31,16 +32,16 @@ def mostrar(page: ft.Page):
                 f'Excluir o termo "{t["nome"]}"?',
                 lambda: excluir(t["id"]),
             ),
+            icone=ft.Icons.LIGHTBULB,
+            cor=c.CORES_CARTOES[i % len(c.CORES_CARTOES)],
         )
-        for t in termos
+        for i, t in enumerate(termos)
     ]
     c.mostrar(
         page,
         cabecalho,
-        ft.FilledButton(
-            "Novo termo", icon=ft.Icons.ADD, on_click=lambda e: navegacao.ir("formulario_termo")
-        ),
-        *(linhas or [ft.Text("Nenhum termo cadastrado.")]),
+        ft.Row([c.botao_principal("Novo termo", ft.Icons.ADD, lambda e: navegacao.ir("formulario_termo"))]),
+        *(linhas or [ft.Text("Nenhum termo cadastrado.", size=16, color=c.TEXTO_SUAVE)]),
     )
 
 
@@ -58,9 +59,9 @@ def formulario(page: ft.Page, termo_id: int | None = None):
             return
 
     aviso = c.aviso_erro()
-    campo_nome = ft.TextField(label="Nome do termo", value=dados.get("nome", ""))
-    campo_definicao = ft.TextField(
-        label="Definição", value=dados.get("definicao", ""), multiline=True, min_lines=3
+    campo_nome = c.campo("Nome do termo", value=dados.get("nome", ""))
+    campo_definicao = c.campo(
+        "Definição", value=dados.get("definicao", ""), multiline=True, min_lines=3
     )
     imagem_termo = c.seletor_imagem(page, dados.get("imagem"), "glossario", aviso)
 
@@ -92,23 +93,14 @@ def formulario(page: ft.Page, termo_id: int | None = None):
 
     c.mostrar(
         page,
-        ft.Row(
-            [
-                c.botao_voltar("gerenciar_glossario"),
-                c.titulo("Editar termo" if termo_id else "Novo termo"),
-            ]
+        c.cabecalho("Editar termo" if termo_id else "Novo termo", ft.Icons.EDIT_NOTE, voltar="gerenciar_glossario"),
+        c.painel(
+            campo_nome,
+            campo_definicao,
+            ft.Text("Imagem do termo", size=16, weight=ft.FontWeight.BOLD, color=c.TEXTO),
+            imagem_termo[0],
+            esticar=True,
         ),
-        campo_nome,
-        campo_definicao,
-        ft.Text("Imagem do termo", weight=ft.FontWeight.BOLD),
-        imagem_termo[0],
         aviso,
-        ft.Row(
-            [
-                ft.OutlinedButton(
-                    "Cancelar", on_click=lambda e: navegacao.ir("gerenciar_glossario")
-                ),
-                ft.FilledButton("Salvar", icon=ft.Icons.SAVE, on_click=salvar),
-            ]
-        ),
+        c.botoes_salvar(lambda e: navegacao.ir("gerenciar_glossario"), salvar),
     )

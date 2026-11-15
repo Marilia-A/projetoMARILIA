@@ -9,7 +9,8 @@ import sessao
 def mostrar(page: ft.Page):
     usuario = sessao.usuario()
     admin = sessao.eh_admin()
-    cabecalho = ft.Row([c.botao_voltar("roteiros"), c.titulo("Turmas")])
+    cabecalho = c.cabecalho("Turmas", ft.Icons.GROUPS, voltar="roteiros",
+                            subtitulo="Clique numa turma para ver os alunos e o progresso")
     aviso = c.aviso_erro()
 
     try:
@@ -27,48 +28,32 @@ def mostrar(page: ft.Page):
             return
         navegacao.ir("turmas")
 
-    def cartao(t):
+    def cartao(t, i):
         subtitulo = f'Código {t["codigo"]} — {t["total_alunos"]} aluno(s)'
         if admin:
             subtitulo += f' — Prof. {t["professor_nome"]}'
-        return ft.Card(
-            content=ft.ListTile(
-                leading=ft.Icon(ft.Icons.GROUPS),
-                title=ft.Text(t["nome"], weight=ft.FontWeight.BOLD),
-                subtitle=ft.Text(subtitulo),
-                on_click=lambda e: navegacao.ir("turma", turma_id=t["id"]),
-                trailing=ft.Row(
-                    [
-                        ft.IconButton(
-                            icon=ft.Icons.EDIT,
-                            tooltip="Editar",
-                            on_click=lambda e: navegacao.ir("formulario_turma", turma_id=t["id"]),
-                        ),
-                        ft.IconButton(
-                            icon=ft.Icons.DELETE,
-                            icon_color=ft.Colors.RED,
-                            tooltip="Excluir",
-                            on_click=lambda e: c.confirmar_exclusao(
-                                page,
-                                "Excluir turma",
-                                f'Excluir a turma "{t["nome"]}"? Os alunos não serão apagados.',
-                                lambda: excluir(t["id"]),
-                            ),
-                        ),
-                    ],
-                    tight=True,
-                ),
-            )
+        return c.cartao_gerenciar(
+            t["nome"],
+            subtitulo,
+            lambda e: navegacao.ir("formulario_turma", turma_id=t["id"]),
+            lambda e: c.confirmar_exclusao(
+                page,
+                "Excluir turma",
+                f'Excluir a turma "{t["nome"]}"? Os alunos não serão apagados.',
+                lambda: excluir(t["id"]),
+            ),
+            icone=ft.Icons.GROUPS,
+            cor=c.CORES_CARTOES[i % len(c.CORES_CARTOES)],
+            ao_clicar=lambda e: navegacao.ir("turma", turma_id=t["id"]),
         )
 
     c.mostrar(
         page,
         cabecalho,
-        ft.FilledButton(
-            "Nova turma", icon=ft.Icons.ADD, on_click=lambda e: navegacao.ir("formulario_turma")
-        ),
+        ft.Row([c.botao_principal("Nova turma", ft.Icons.ADD, lambda e: navegacao.ir("formulario_turma"))]),
         aviso,
-        *([cartao(t) for t in turmas] or [ft.Text("Nenhuma turma cadastrada.")]),
+        *([cartao(t, i) for i, t in enumerate(turmas)]
+          or [ft.Text("Nenhuma turma cadastrada.", size=16, color=c.TEXTO_SUAVE)]),
     )
 
 
@@ -89,7 +74,7 @@ def formulario(page: ft.Page, turma_id: int | None = None):
         return
 
     aviso = c.aviso_erro()
-    campo_nome = ft.TextField(label="Nome da turma (ex.: 8º A)", value=dados.get("nome", ""))
+    campo_nome = c.campo("Nome da turma (ex.: 8º A)", value=dados.get("nome", ""))
     seletor_professor = None
     if admin:
         valor = str(dados["professor_id"]) if dados else None
@@ -122,27 +107,19 @@ def formulario(page: ft.Page, turma_id: int | None = None):
             return
         navegacao.ir("turmas")
 
-    controles = [
-        ft.Row(
-            [c.botao_voltar("turmas"), c.titulo("Editar turma" if turma_id else "Nova turma")]
-        ),
-        campo_nome,
-    ]
+    campos = [campo_nome]
     if admin:
-        controles.append(ft.Text("Professor responsável", weight=ft.FontWeight.BOLD))
-        controles.append(
+        campos.append(ft.Text("Professor responsável", size=16, weight=ft.FontWeight.BOLD, color=c.TEXTO))
+        campos.append(
             seletor_professor if professores else ft.Text("Nenhum professor cadastrado.")
         )
-    controles += [
+    c.mostrar(
+        page,
+        c.cabecalho("Editar turma" if turma_id else "Nova turma", ft.Icons.GROUP_ADD, voltar="turmas"),
+        c.painel(*campos, esticar=True),
         aviso,
-        ft.Row(
-            [
-                ft.OutlinedButton("Cancelar", on_click=lambda e: navegacao.ir("turmas")),
-                ft.FilledButton("Salvar", icon=ft.Icons.SAVE, on_click=salvar),
-            ]
-        ),
-    ]
-    c.mostrar(page, *controles)
+        c.botoes_salvar(lambda e: navegacao.ir("turmas"), salvar),
+    )
 
 
 def detalhe(page: ft.Page, turma_id: int):
@@ -174,18 +151,19 @@ def detalhe(page: ft.Page, turma_id: int):
         return f'{a["email"]} — {a["ano_escolar"]}' if a["ano_escolar"] else a["email"]
 
     membros = [
-        ft.ListTile(
-            leading=ft.Icon(ft.Icons.PERSON),
-            title=ft.Text(a["nome"]),
-            subtitle=ft.Text(descricao(a)),
-            trailing=ft.IconButton(
+        c.cartao(
+            a["nome"],
+            descricao(a),
+            ft.Icons.FACE,
+            c.CORES_CARTOES[i % len(c.CORES_CARTOES)],
+            direita=ft.IconButton(
                 icon=ft.Icons.PERSON_REMOVE,
-                icon_color=ft.Colors.RED,
+                icon_color=ft.Colors.RED_400,
                 tooltip="Remover da turma",
                 on_click=lambda e, aid=a["id"]: alterar(api.remover_aluno_turma, aid),
             ),
         )
-        for a in turma["alunos"]
+        for i, a in enumerate(turma["alunos"])
     ]
 
     lista_disponiveis = ft.Column()
@@ -193,44 +171,39 @@ def detalhe(page: ft.Page, turma_id: int):
     def filtrar(e=None):
         texto = (campo_filtro.value or "").strip().lower()
         lista_disponiveis.controls = [
-            ft.ListTile(
-                leading=ft.Icon(ft.Icons.PERSON_OUTLINE),
-                title=ft.Text(a["nome"]),
-                subtitle=ft.Text(descricao(a)),
-                trailing=ft.IconButton(
+            c.cartao(
+                a["nome"],
+                descricao(a),
+                ft.Icons.PERSON_OUTLINE,
+                c.CINZA,
+                direita=ft.IconButton(
                     icon=ft.Icons.PERSON_ADD,
-                    icon_color=ft.Colors.GREEN,
+                    icon_color=c.VERDE,
                     tooltip="Adicionar à turma",
                     on_click=lambda e, aid=a["id"]: alterar(api.adicionar_aluno_turma, aid),
                 ),
             )
             for a in disponiveis
             if texto in a["nome"].lower() or texto in a["email"].lower()
-        ] or [ft.Text("Nenhum aluno disponível.")]
+        ] or [ft.Text("Nenhum aluno disponível.", size=16, color=c.TEXTO_SUAVE)]
         if e:
             page.update()
 
-    campo_filtro = ft.TextField(
-        label="Filtrar alunos por nome ou e-mail", prefix_icon=ft.Icons.SEARCH, on_change=filtrar
-    )
+    campo_filtro = c.campo("Filtrar alunos por nome ou e-mail", prefix_icon=ft.Icons.SEARCH, on_change=filtrar,
+                           expand=True)
     filtrar()
 
     c.mostrar(
         page,
-        ft.Row([c.botao_voltar("turmas"), c.titulo(turma["nome"])]),
-        ft.Text(f'Código: {turma["codigo"]} — Professor: {turma["professor_nome"]}', size=16),
-        ft.FilledButton(
-            "Ver progresso",
-            icon=ft.Icons.INSIGHTS,
-            on_click=lambda e: navegacao.ir("dashboard", turma_id=turma_id),
-        ),
+        c.cabecalho(turma["nome"], ft.Icons.GROUPS, voltar="turmas",
+                    subtitulo=f'Código da turma: {turma["codigo"]} — Professor: {turma["professor_nome"]}'),
+        ft.Row([c.botao_principal("Ver progresso", ft.Icons.INSIGHTS,
+                                  lambda e: navegacao.ir("dashboard", turma_id=turma_id), cor=c.VERDE)]),
         aviso,
-        ft.Text(
-            f'Alunos da turma ({len(turma["alunos"])})', size=20, weight=ft.FontWeight.BOLD
-        ),
-        *(membros or [ft.Text("Nenhum aluno na turma.")]),
+        ft.Text(f'Alunos da turma ({len(turma["alunos"])})', size=20, weight=ft.FontWeight.BOLD, color=c.TEXTO),
+        *(membros or [ft.Text("Nenhum aluno na turma.", size=16, color=c.TEXTO_SUAVE)]),
         ft.Divider(),
-        ft.Text("Adicionar alunos", size=20, weight=ft.FontWeight.BOLD),
-        campo_filtro,
+        ft.Text("Adicionar alunos", size=20, weight=ft.FontWeight.BOLD, color=c.TEXTO),
+        ft.Row([campo_filtro]),
         lista_disponiveis,
     )

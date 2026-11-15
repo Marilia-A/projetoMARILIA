@@ -6,6 +6,8 @@ import navegacao
 import sessao
 
 TIPOS = {"aluno": "Alunos", "professor": "Professores", "admin": "Administradores"}
+ICONES = {"aluno": (ft.Icons.FACE, c.AZUL), "professor": (ft.Icons.SCHOOL, c.LARANJA),
+          "admin": (ft.Icons.ADMIN_PANEL_SETTINGS, c.ROXO)}
 
 
 def seletor_tipo(valor: str, ao_mudar=None):
@@ -17,7 +19,8 @@ def seletor_tipo(valor: str, ao_mudar=None):
 
 
 def mostrar(page: ft.Page, tipo: str = "aluno"):
-    cabecalho = ft.Row([c.botao_voltar("roteiros"), c.titulo("Gerenciar usuários")])
+    cabecalho = c.cabecalho("Gerenciar usuários", ft.Icons.MANAGE_ACCOUNTS, voltar="roteiros",
+                            subtitulo="Só o administrador cria contas")
     filtro = seletor_tipo(
         tipo, lambda e: navegacao.ir("gerenciar_usuarios", tipo=e.control.value)
     )
@@ -61,20 +64,19 @@ def mostrar(page: ft.Page, tipo: str = "aluno"):
                 "formulario_usuario", usuario_id=uid, tipo=tipo
             ),
             lambda e, u=u: pedir_exclusao(u),
+            icone=ICONES[tipo][0],
+            cor=ICONES[tipo][1],
         )
         for u in usuarios
     ]
     c.mostrar(
         page,
         cabecalho,
-        filtro,
-        ft.FilledButton(
-            "Novo usuário",
-            icon=ft.Icons.PERSON_ADD,
-            on_click=lambda e: navegacao.ir("formulario_usuario", tipo=tipo),
-        ),
+        c.painel(filtro, padding=12),
+        ft.Row([c.botao_principal("Novo usuário", ft.Icons.PERSON_ADD,
+                                  lambda e: navegacao.ir("formulario_usuario", tipo=tipo))]),
         aviso,
-        *(linhas or [ft.Text("Nenhum usuário cadastrado.")]),
+        *(linhas or [ft.Text("Nenhum usuário cadastrado.", size=16, color=c.TEXTO_SUAVE)]),
     )
 
 
@@ -94,15 +96,15 @@ def formulario(page: ft.Page, usuario_id: int | None = None, tipo: str = "aluno"
             return
 
     aviso = c.aviso_erro()
-    campo_nome = ft.TextField(label="Nome", value=dados.get("nome", ""))
-    campo_email = ft.TextField(label="E-mail", value=dados.get("email", ""))
-    campo_ano = ft.TextField(
-        label="Ano escolar (ex.: 8º ano)",
+    campo_nome = c.campo("Nome", value=dados.get("nome", ""))
+    campo_email = c.campo("E-mail", value=dados.get("email", ""))
+    campo_ano = c.campo(
+        "Ano escolar (ex.: 8º ano)",
         value=dados.get("ano_escolar") or "",
         visible=dados["tipo"] == "aluno",
     )
-    campo_senha = ft.TextField(
-        label="Nova senha (deixe em branco para manter)" if usuario_id else "Senha",
+    campo_senha = c.campo(
+        "Nova senha (deixe em branco para manter)" if usuario_id else "Senha",
         password=True,
         can_reveal_password=True,
     )
@@ -150,25 +152,17 @@ def formulario(page: ft.Page, usuario_id: int | None = None, tipo: str = "aluno"
 
     c.mostrar(
         page,
-        ft.Row(
-            [
-                c.botao_voltar("gerenciar_usuarios", tipo=tipo),
-                c.titulo("Editar usuário" if usuario_id else "Novo usuário"),
-            ]
+        c.cabecalho("Editar usuário" if usuario_id else "Novo usuário", ft.Icons.PERSON_ADD,
+                    voltar="gerenciar_usuarios", tipo=tipo),
+        c.painel(
+            ft.Text("Tipo de usuário", size=16, weight=ft.FontWeight.BOLD, color=c.TEXTO),
+            campo_tipo,
+            campo_nome,
+            campo_email,
+            campo_ano,
+            campo_senha,
+            esticar=True,
         ),
-        ft.Text("Tipo de usuário", weight=ft.FontWeight.BOLD),
-        campo_tipo,
-        campo_nome,
-        campo_email,
-        campo_ano,
-        campo_senha,
         aviso,
-        ft.Row(
-            [
-                ft.OutlinedButton(
-                    "Cancelar", on_click=lambda e: navegacao.ir("gerenciar_usuarios", tipo=tipo)
-                ),
-                ft.FilledButton("Salvar", icon=ft.Icons.SAVE, on_click=salvar),
-            ]
-        ),
+        c.botoes_salvar(lambda e: navegacao.ir("gerenciar_usuarios", tipo=tipo), salvar),
     )
