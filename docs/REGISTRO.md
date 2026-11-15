@@ -104,6 +104,11 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
 - O VS Code da autora estava no branch antigo `bloco-10-visual` (por isso parecia que o Bloco 10 não tinha entrado); os Blocos 10 e 12 estão no `main`. Orientação: `git checkout main` + `git pull origin main`.
 - **Bloco 13 – prints e registro** (branch `bloco-13-prints-registro`): 22 prints em `docs/prints/` (2560 × 1600) com índice e sugestão de uso no 6.2; prints principais no README do front; registro atualizado. O tutor e o painel do professor foram fotografados na nuvem (1 pergunta a mais no histórico da conta de teste do aluno).
 - Verificação dos PRs devolvida ao chat "Verificar PR e Correções" (por evento, como antes), começando pelo PR #18 e pelo PR do Bloco 13.
+- PR #19 (Bloco 13) mesclado pelo botão do site (`f394ac4`, committer "GitHub").
+- **Revisão do Bloco 12 e do Bloco 13** (chat "Verificar PR e Correções"): nenhum erro de código; as 31 telas abriram como aluno, professor e admin; os robôs e as brincadeiras funcionaram nos cliques. Pontos visuais e de conteúdo anotados em "Falhas encontradas na verificação".
+- **Nuvem confirmada pela autora**: o Render respondeu (~32 s no primeiro acesso com o servidor dormindo) e o Neon recebeu as tentativas de login (tabela `tentativalogin`), tanto as de um teste direto na API quanto as feitas pelo Flet rodando no VS Code. O app usa a API do Render e o banco do Neon, nada local.
+- **Testes das telas pela autora** com admin, aluno (AnaTester) e professor (BrunoTester) contra a nuvem: todas as telas, robôs, brincadeiras e tutor funcionando. O `uvicorn` local ficou sem nenhuma requisição, confirmando que tudo passou pela API no ar.
+- Próximo passo: gerar e testar o `MARILIA.exe` no Windows.
 
 ---
 
@@ -123,6 +128,7 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
 - **Front desktop** (`.exe`) apontando para a API; web fica como trabalho futuro.
 - **Listagem de alunos para o professor** (`GET /usuarios`): o professor vê todos os alunos (nome, e-mail, ano) porque é dessa lista que ele escolhe quem adicionar à turma. Progresso, conquistas, histórico e detalhe continuam restritos às turmas dele. Alternativa futura: o professor só adiciona alunos pelo código da turma, e a listagem passa a mostrar só os alunos dele.
 - **Limite de login por e-mail + endereço** (Bloco 8, substitui a decisão de 13/11 de contar só por e-mail): errar a senha de outra pessoa a partir de outro computador não bloqueia mais a conta dela. O limite geral de 20 erros por e-mail continua existindo como proteção contra tentativas de vários endereços; nesse caso extremo, a conta pode ficar bloqueada por até 15 min.
+- **Contas de demonstração do TCC** (15/11): **AnaTester** (aluna, `ana@ifg.com`) e **BrunoTester** (professor), criadas pela autora pelo admin em 14/11. Os e-mails são fictícios e ficam assim por decisão da autora. Os usuários de demonstração pelas variáveis `DEMO_*` (Bloco 11) **não** serão configurados no Render; o código continua lá, mas sem uso. Novos prints devem usar sempre essas duas contas.
 
 ---
 
@@ -212,6 +218,15 @@ Revisão de 13/11 dos PRs #1 a #11 (53 verificações automáticas passaram na `
 - ✅ (Bloco 8) 🟡 Regra "aluno de turma do professor" repetida em dois lugares (`seguranca.py` e `routers/usuarios.py`) → juntar numa função.
 - 🟡 `gerar_executavel.bat` ainda não testado no Windows.
 - Decisão mantida: professor vê a lista de todos os alunos. Padrão `SEED_USUARIOS_TESTE` já é `false` (Bloco 8).
+
+Revisão de 15/11 do PR #18 (Bloco 12) e do Bloco 13 (PR #19); nenhum erro de código:
+
+- 🟠 **Committer dos merges pelo site** continua: PRs #13 a #19 ficaram com committer "GitHub". Não reescrever o histórico; voltar ao merge local.
+- 🟡 **Contraste das cores** (desde o Bloco 10): texto branco sobre verde, laranja e amarelo fica difícil de ler (ex.: botão "Ver progresso", estrela amarela).
+- ⚪ **Brincadeira do LED**: o balão fala em `delay(1000)` (1 segundo), mas a animação pisca a cada 0,5 s.
+- ⚪ **Prints com contas misturadas**: 17 e 20 usam "Aluno Demonstração" (API local); 21 e 22 usam AnaTester (nuvem). Resolvido pela decisão de usar só AnaTester e BrunoTester; refazer os prints 17 e 20 se forem para o TCC.
+- ⚪ **"8 ano" sem o º** no nome da turma da conta de teste (as outras telas mostram "8º ano").
+- ⚪ **Print 22 cortado**: a seção "Perguntas ao tutor" só mostra o título.
 
 ### Melhorias opcionais
 - [ ] Dashboard com menos consultas por aluno
