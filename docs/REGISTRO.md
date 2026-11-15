@@ -27,8 +27,8 @@ Atualizado a cada etapa. (Itens de texto do TCC ficam no checklist pessoal; aqui
 | v1.2 | `5d6b100` | Blocos 4 e 5 – front na nuvem + executável; acesso do professor, upload, limites (PRs #5, #6 e os PRs de 13/11) |
 | v1.3 | `1d547b2` | Correções da verificação (limite de login no banco, limpeza de imagens, usuários de teste desligados por padrão) + READMEs completos |
 | v1.3.1 | `caf7b48` | Limite de login na nuvem pelo endereço real (PR #15) |
-| v1.4 | `65cb8cf` *(a criar pela autora)* | Blocos 10 e 11 – visual infantil + usuários de demonstração. **Guarda o visual de antes do Bloco 12.** |
-| v1.5 | *reservada* | Bloco 12 – telas de gerenciamento no tema, rodapé fixo no roteiro e robôs interativos |
+| v1.4 | `65cb8cf` *(comandos passados à autora em 15/11; conferir no GitHub)* | Blocos 10 e 11 – visual infantil + usuários de demonstração. **Guarda o visual de antes do Bloco 12.** |
+| v1.5 | `bf08d62` *(idem)* | Bloco 12 – telas de gerenciamento no tema, rodapé fixo no roteiro e robôs interativos (PR #18) |
 
 Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blocos já mesclados no `main`.
 
@@ -100,6 +100,10 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
   - `frontend/robos.py`: robô desenhado com formas do Flet; mascote que acena/fala no login, na tela inicial e nas conquistas; uma brincadeira por roteiro na primeira página (lâmpada, semáforo, botão, dia/noite com LDR, alarme com PIR); cabeça do robô na tutora; robô que comemora ao concluir;
   - animações seguras: trocar de tela no meio de uma animação não trava o app;
   - testado com a API local (SQLite): telas de aluno, professor e admin; as 5 brincadeiras clicadas; aviso de nova conquista depois da comemoração. Falta: teste no Windows (`.exe`).
+- PR #18 (Bloco 12) mesclado pelo botão do site (`bf08d62`, committer "GitHub"); o commit do bloco está no nome da autora. Comandos das tags v1.4 e v1.5 passados à autora.
+- O VS Code da autora estava no branch antigo `bloco-10-visual` (por isso parecia que o Bloco 10 não tinha entrado); os Blocos 10 e 12 estão no `main`. Orientação: `git checkout main` + `git pull origin main`.
+- **Bloco 13 – prints e registro** (branch `bloco-13-prints-registro`): 22 prints em `docs/prints/` (2560 × 1600) com índice e sugestão de uso no 6.2; prints principais no README do front; registro atualizado. O tutor e o painel do professor foram fotografados na nuvem (1 pergunta a mais no histórico da conta de teste do aluno).
+- Verificação dos PRs devolvida ao chat "Verificar PR e Correções" (por evento, como antes), começando pelo PR #18 e pelo PR do Bloco 13.
 
 ---
 
@@ -187,10 +191,10 @@ Três arquivos, cada um com o que é necessário para aquela parte. **Escritos e
 
 ### Para fazer mais tarde (agendado)
 - [x] **Bloco 10 – visual infantil** no Flet (PR #17) + Bloco 12 (gerenciamento no tema e robôs interativos).
-- [ ] Prints das telas (roteiro com brincadeira, tutor, dashboard) para o 6.2 e para o README do front — depois do Bloco 12.
+- [x] Prints das telas para o 6.2 e para o README do front (Bloco 13, `docs/prints/`). Refazer no Windows só se o visual mudar.
 - [ ] Testar o `MARILIA.exe` no Windows contra a nuvem (de preferência em outro PC).
 - [x] Item CRÍTICO no Render (14/11).
-- [ ] Tags: v1.4 em `65cb8cf` **antes** de mesclar o Bloco 12; v1.5 depois.
+- [ ] Tags: conferir se `v1.4` (`65cb8cf`) e `v1.5` (`bf08d62`) aparecem no GitHub; criar `v1.6` depois do merge do Bloco 13.
 - [x] Preencher nos READMEs: sigla do MARILIA, orientação/instituição (Bloco 9).
 - [x] Padronizar os nomes dos roteiros entre texto e `backend/seed.py` (o texto do TCC passou a usar os nomes do app, 14/11) ("Luz Noturna Automática" × "Luz Noturna com LDR"; "Alarme com Sensor de Presença" × "Alarme com Sensor PIR").
 - [x] Corrigir as falhas que a verificação dos PRs apontou (Bloco 8, PR #13).
@@ -220,6 +224,9 @@ Revisão de 13/11 dos PRs #1 a #11 (53 verificações automáticas passaram na `
 
 ### Dependências do texto do TCC ligadas ao software
 - ✅ 3.4, 5.1, 5.6 e 6.1: implantação na nuvem, imagens no banco, admin por variável de ambiente, usuários de teste desligados (texto revisado em 14/11).
-- ✅ 6.1: limite de login e da pergunta citados. **Atualizar a frase** quando o Bloco 8 entrar: o bloqueio passa a ser por e-mail + endereço (5 erros em 15 min), com limite geral de 20 por e-mail.
-- ✅ 6.3: tempo de login na nuvem (~0,6 s, RNF08).
+- [ ] 6.1: **atualizar a frase** do limite de login (Bloco 8 já entrou): 5 erros por e-mail + endereço em 15 min, limite geral de 20 por e-mail.
+- [ ] 6.1/5.6: usuários de demonstração por variáveis de ambiente (Bloco 11 entrou).
+- [ ] 6.2: prints novos (`docs/prints/`) e robôs interativos/brincadeiras (Bloco 12).
+- [ ] 6.3 e Tabela 7: trocar o "~0,6 s" (medido com o banco vazio em 11/11). Medições de 15/11: 0,7–0,9 s (login errado, servidor acordado), 1,5–2,4 s (login certo, por causa do hash PBKDF2) e ~33 s no primeiro acesso com o servidor dormindo. Falta medir na rede local.
+- [ ] Cap. 7: tirar "melhoria do visual para o público infantil" dos trabalhos futuros (Blocos 10 e 12 entraram).
 - ✅ Cap. 7: versão web como trabalho futuro.
