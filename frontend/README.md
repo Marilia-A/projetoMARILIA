@@ -71,6 +71,16 @@ Para um executável que aponte para outro servidor, defina `MARILIA_API` no comp
 | Professor | Turmas (criar, editar, adicionar alunos); Painel da turma e detalhe do aluno; Gerenciar roteiros; Gerenciar glossário |
 | Administrador | Tudo do professor + Gerenciar usuários |
 
+Prints de todas as telas (com índice) em [`docs/prints/`](../docs/prints/README.md). Alguns exemplos:
+
+| Login | Tela inicial do aluno |
+|---|---|
+| ![Login](../docs/prints/01_login.png) | ![Tela inicial](../docs/prints/02_inicio_aluno.png) |
+| **Roteiro com brincadeira** | **Tutora** |
+| ![Roteiro](../docs/prints/03_roteiro_led.png) | ![Tutora](../docs/prints/11_tutor.png) |
+| **Conquistas** | **Painel do professor** |
+| ![Conquistas](../docs/prints/13_conquistas.png) | ![Painel](../docs/prints/21_dashboard.png) |
+
 ### Robôs interativos
 
 O app tem robôs desenhados com formas simples do Flet (sem imagens externas). Nenhum deles chama a API: é só animação na tela.
