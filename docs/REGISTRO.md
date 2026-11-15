@@ -108,6 +108,10 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
 - **Revisão do Bloco 12 e do Bloco 13** (chat "Verificar PR e Correções"): nenhum erro de código; as 31 telas abriram como aluno, professor e admin; os robôs e as brincadeiras funcionaram nos cliques. Pontos visuais e de conteúdo anotados em "Falhas encontradas na verificação".
 - **Nuvem confirmada pela autora**: o Render respondeu (~32 s no primeiro acesso com o servidor dormindo) e o Neon recebeu as tentativas de login (tabela `tentativalogin`), tanto as de um teste direto na API quanto as feitas pelo Flet rodando no VS Code. O app usa a API do Render e o banco do Neon, nada local.
 - **Testes das telas pela autora** com admin, aluno (AnaTester) e professor (BrunoTester) contra a nuvem: todas as telas, robôs, brincadeiras e tutor funcionando. O `uvicorn` local ficou sem nenhuma requisição, confirmando que tudo passou pela API no ar.
+- **Bloco 15 – login e versão do executável** (branch `bloco-15-login-versao`):
+  - login: enquanto espera a API, o botão vira "Entrando...", fica desativado junto com os campos e aparece o aviso de que o primeiro acesso pode levar até 1 minuto (servidor dormindo). Cliques repetidos e Enter são ignorados até a resposta, então não contam várias tentativas erradas de uma vez no limite de login (antes, 5 cliques com a senha errada bloqueavam o e-mail por 15 min);
+  - `gerar_executavel.bat`: versão do arquivo de 1.2.0 para 1.6.0;
+  - testado (simulado, sem janela): 5 cliques + Enter durante a espera geraram 1 pedido à API; botão e campos voltam ao normal depois do erro; login certo vai para os roteiros. Falta: conferir na janela do app.
 - Próximo passo: gerar e testar o `MARILIA.exe` no Windows.
 
 ---
