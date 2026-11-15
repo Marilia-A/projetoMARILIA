@@ -1,3 +1,5 @@
+import asyncio
+
 import flet as ft
 
 import api
@@ -161,18 +163,27 @@ def mostrar(page: ft.Page, roteiro_id: int):
         visible=False,
     )
 
-    def perguntar(e):
+    # Clique assíncrono (como o login, Bloco 16): a pergunta ao tutor roda em segundo plano
+    # para a rodinha de "carregando" aparecer, e cliques repetidos durante a espera
+    # são ignorados (não viram várias perguntas seguidas no histórico do aluno).
+    estado_tutor = {"perguntando": False}
+
+    async def perguntar(e):
+        if estado_tutor["perguntando"]:
+            return
         texto = (campo_pergunta.value or "").strip()
         if not texto:
             return
+        estado_tutor["perguntando"] = True
         botao_perguntar.disabled = True
+        campo_pergunta.disabled = True
         carregando.visible = True
         resposta_tutor.value = ""
         bolha_resposta.visible = False
         page.update()
         try:
-            resposta_tutor.value = api.perguntar_tutor(
-                usuario["id"], roteiro_id, nivel.value, texto
+            resposta_tutor.value = await asyncio.to_thread(
+                api.perguntar_tutor, usuario["id"], roteiro_id, nivel.value, texto
             )
         except api.ErroAPI as erro:
             resposta_tutor.value = (
@@ -180,7 +191,14 @@ def mostrar(page: ft.Page, roteiro_id: int):
                 if erro.status in (422, 503)
                 else "Não foi possível falar com o tutor. Tente de novo."
             )
+        except sessao.SessaoExpirada:
+            return
+        except Exception:
+            resposta_tutor.value = "Não foi possível falar com o tutor. Tente de novo."
+        finally:
+            estado_tutor["perguntando"] = False
         botao_perguntar.disabled = False
+        campo_pergunta.disabled = False
         carregando.visible = False
         bolha_resposta.visible = bool(resposta_tutor.value)
         page.update()
