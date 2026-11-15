@@ -48,15 +48,24 @@ set MARILIA_API=http://127.0.0.1:8000 && python main.py
 
 ## Gerar o executável (.exe)
 
-No Windows, dentro da pasta `frontend`, com o ambiente virtual ativado:
+No Windows, com o ambiente virtual criado na raiz do projeto (pasta `.venv`, ver "Instalação"), instale o PyInstaller uma vez:
 
 ```bash
 pip install pyinstaller
 ```
 
+Depois, gere o executável de um destes jeitos:
+
+- **Dois cliques** em `frontend\gerar_executavel.bat`. Ele ativa a `.venv` sozinho.
+- **No terminal do VS Code (PowerShell)**, dentro da pasta `frontend`. O PowerShell exige o `.\` antes do nome:
+
 ```bash
-gerar_executavel.bat
+.\gerar_executavel.bat
 ```
+
+No Prompt de Comando (cmd), basta `gerar_executavel.bat`. Se faltar o Flet ou o PyInstaller, o `.bat` avisa o que instalar.
+
+A geração leva alguns minutos e mostra bastante texto; avisos `WARNING` são normais.
 
 O arquivo sai em `frontend\dist\MARILIA.exe`. Basta copiá-lo para os outros computadores — não é preciso instalar Python neles. As pastas `dist/` e `build/` e o arquivo `.spec` não vão para o GitHub.
 

@@ -27,8 +27,8 @@ Atualizado a cada etapa. (Itens de texto do TCC ficam no checklist pessoal; aqui
 | v1.2 | `5d6b100` | Blocos 4 e 5 – front na nuvem + executável; acesso do professor, upload, limites (PRs #5, #6 e os PRs de 13/11) |
 | v1.3 | `1d547b2` | Correções da verificação (limite de login no banco, limpeza de imagens, usuários de teste desligados por padrão) + READMEs completos |
 | v1.3.1 | `caf7b48` | Limite de login na nuvem pelo endereço real (PR #15) |
-| v1.4 | `65cb8cf` *(comandos passados à autora em 15/11; conferir no GitHub)* | Blocos 10 e 11 – visual infantil + usuários de demonstração. **Guarda o visual de antes do Bloco 12.** |
-| v1.5 | `bf08d62` *(idem)* | Bloco 12 – telas de gerenciamento no tema, rodapé fixo no roteiro e robôs interativos (PR #18) |
+| v1.4 | `65cb8cf` | Blocos 10 e 11 – visual infantil + usuários de demonstração. **Guarda o visual de antes do Bloco 12.** |
+| v1.5 | `bf08d62` | Bloco 12 – telas de gerenciamento no tema, rodapé fixo no roteiro e robôs interativos (PR #18) |
 
 Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blocos já mesclados no `main`.
 
@@ -115,6 +115,13 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
 - PRs #20 e #21 mesclados pelo botão do site (`18fe84b` e `e1c8a8c`, committer "GitHub").
 - **Bloco 15 não funcionou na janela** (a autora não viu o "Entrando..."): no Flet 0.86, um clique com função comum (sem `async`) trava a janela até terminar, então nada aparece antes da resposta da API, e os cliques extras ficam na fila e viram logins seguidos. O teste do Bloco 15 era simulado, sem a janela, e não pegou isso.
 - **Bloco 16 – login assíncrono** (branch `bloco-16-login-assincrono`): o clique do login virou `async` e o pedido à API roda em segundo plano (`asyncio.to_thread`); a janela fica livre para mostrar o aviso, e os cliques durante a espera são ignorados. Testado **na janela** (Flet no navegador, API falsa com 3–5 s de espera): aparecem o "Entrando..." e o aviso; 5 cliques geraram 1 login (o código do Bloco 15 gerou 5, igual ao print do Neon da autora); a senha errada volta com a mensagem de erro; o login certo abre a tela de roteiros.
+- PR #22 (Bloco 16) mesclado pelo botão do site (`f64768d`, committer "GitHub"). Revisão dos PRs #20 a #22 pelo chat "Verificar PR e Correções": nenhum erro de código; apontou que o tutor tinha o mesmo problema do login.
+- Primeira tentativa de gerar o `.exe`: no PowerShell, `gerar_executavel.bat` não roda sem o `.\` antes (o PowerShell não executa arquivos da pasta atual pelo nome).
+- **Bloco 17 – tutor assíncrono e `.bat` mais fácil** (branch `bloco-17-tutor-executavel`):
+  - tutor: o clique em "Perguntar" virou `async` e a pergunta roda em segundo plano (`asyncio.to_thread`), como o login; a rodinha de carregando aparece e cliques repetidos são ignorados (antes viravam várias perguntas ao Groq, todas gravadas no histórico do aluno). Campo de pergunta desativado durante a espera;
+  - `gerar_executavel.bat`: ativa sozinho a `.venv` da raiz (funciona com dois cliques), avisa se faltar o Flet ou o PyInstaller e para com mensagem se der erro; README do front explica o `.\` do PowerShell;
+  - testado **na janela** (Flet no navegador, API local com SQLite e IA falsa de 4 s): rodinha aparece durante a espera; 5 cliques geraram 1 pergunta; a resposta aparece na bolha da tutora.
+- Pendente (🟡, apontado na revisão): os outros cliques que chamam a API (salvar, buscar, concluir roteiro, montar a tela de roteiros depois do login) ainda travam a janela durante a resposta. São rápidos com o servidor acordado; corrigir só se incomodar.
 - Próximo passo: gerar e testar o `MARILIA.exe` no Windows.
 
 ---
@@ -207,7 +214,7 @@ Três arquivos, cada um com o que é necessário para aquela parte. **Escritos e
 - [x] Prints das telas para o 6.2 e para o README do front (Bloco 13, `docs/prints/`). Refazer no Windows só se o visual mudar.
 - [ ] Testar o `MARILIA.exe` no Windows contra a nuvem (de preferência em outro PC).
 - [x] Item CRÍTICO no Render (14/11).
-- [ ] Tags: conferir se `v1.4` (`65cb8cf`) e `v1.5` (`bf08d62`) aparecem no GitHub; criar `v1.6` depois do merge do Bloco 13.
+- [ ] Tags: `v1.4` (`65cb8cf`) e `v1.5` (`bf08d62`) conferidas no GitHub (15/11). Criar `v1.6` depois do merge do Bloco 17 (executável 1.6.0).
 - [x] Preencher nos READMEs: sigla do MARILIA, orientação/instituição (Bloco 9).
 - [x] Padronizar os nomes dos roteiros entre texto e `backend/seed.py` (o texto do TCC passou a usar os nomes do app, 14/11) ("Luz Noturna Automática" × "Luz Noturna com LDR"; "Alarme com Sensor de Presença" × "Alarme com Sensor PIR").
 - [x] Corrigir as falhas que a verificação dos PRs apontou (Bloco 8, PR #13).
