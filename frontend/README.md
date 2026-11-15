@@ -71,6 +71,24 @@ Para um executável que aponte para outro servidor, defina `MARILIA_API` no comp
 | Professor | Turmas (criar, editar, adicionar alunos); Painel da turma e detalhe do aluno; Gerenciar roteiros; Gerenciar glossário |
 | Administrador | Tudo do professor + Gerenciar usuários |
 
+### Robôs interativos
+
+O app tem robôs desenhados com formas simples do Flet (sem imagens externas). Nenhum deles chama a API: é só animação na tela.
+
+- **Login, tela inicial e conquistas**: um robô mascote que acena (ou pula, nas conquistas) e diz uma frase nova a cada clique.
+- **Primeira página de cada roteiro** ("Experimente"): uma brincadeira que imita o circuito do roteiro:
+
+| Roteiro | Brincadeira |
+|---|---|
+| LED Piscando | Clicar no robô faz a lâmpada piscar 3 vezes e ficar acesa |
+| Semáforo | Cada clique troca a cor: verde → amarelo → vermelho |
+| Botão que Acende o LED | O LED fica aceso só enquanto o botão vermelho está apertado |
+| Luz Noturna Automática | Clicar no céu troca dia/noite; à noite o LED acende sozinho |
+| Alarme com Sensor de Presença | Alguém passa na frente do sensor, o LED pisca e a buzina toca |
+| Roteiros novos (criados pelo professor) | A brincadeira da lâmpada |
+
+- **Tutora**: o balão de conversa usa a cabeça do robô; ao concluir o roteiro, um robô verde comemora.
+
 ## Organização do código
 
 ```
@@ -79,7 +97,8 @@ config.py        Endereço da API (MARILIA_API)
 api.py           Cliente HTTP da API (token, erros, sessão expirada)
 sessao.py        Usuário logado
 navegacao.py     Troca de telas
-componentes.py   Elementos visuais reaproveitados
+componentes.py   Elementos visuais reaproveitados (cores, cabeçalho, cartões, botões, campos)
+robos.py         Robôs desenhados e brincadeiras interativas de cada roteiro
 telas/           Uma tela por arquivo
 gerar_executavel.bat   Gera o MARILIA.exe
 ```

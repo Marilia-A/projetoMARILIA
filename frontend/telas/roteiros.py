@@ -3,6 +3,7 @@ import flet as ft
 import api
 import componentes as c
 import navegacao
+import robos
 import sessao
 
 
@@ -119,6 +120,7 @@ def mostrar(page: ft.Page):
         c.cabecalho(f"Olá, {nome}!", ft.Icons.ROCKET_LAUNCH, subtitulo=subtitulo, extras=[atualizar, sair]),
         ft.Row(botoes, wrap=True, spacing=10, run_spacing=10),
         painel_progresso,
+        *([c.painel(robos.mascote(robos.FRASES_INICIO, c.AZUL, 0.6)[0], padding=14)] if eh_aluno else []),
         linha_busca,
         ft.Text("Roteiros", size=22, weight=ft.FontWeight.BOLD, color=c.TEXTO),
         resultados,

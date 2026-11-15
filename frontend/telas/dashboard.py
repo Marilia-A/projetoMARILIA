@@ -76,7 +76,7 @@ def mostrar(page: ft.Page, turma_id: int):
                 cartao_resumo("Alunos", str(len(d["alunos"])), ft.Icons.GROUPS, c.AZUL),
                 cartao_resumo(
                     "Média de roteiros concluídos",
-                    f'{d["media_concluidos"]} de {total}',
+                    f'{c.numero(d["media_concluidos"])} de {total}',
                     ft.Icons.CHECK_CIRCLE,
                     c.VERDE,
                 ),

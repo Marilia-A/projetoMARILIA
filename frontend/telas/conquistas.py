@@ -4,6 +4,7 @@ import flet as ft
 
 import api
 import componentes as c
+import robos
 import sessao
 
 BRASILIA = timezone(timedelta(hours=-3))
@@ -57,9 +58,18 @@ def mostrar(page: ft.Page):
         return
 
     total = sum(1 for b in badges if b["conquistada"])
+    if total == len(badges) and badges:
+        frases = ["Você ganhou todos os troféus! Que inventor!", "Parabéns! Clique de novo para comemorar!"]
+    elif total:
+        frases = [f"Você já tem {total} troféu(s)! Clique em mim para comemorar!",
+                  "Conclua mais roteiros para desbloquear os próximos.", "Uhuu! Continue assim!"]
+    else:
+        frases = ["Conclua o seu primeiro roteiro para ganhar um troféu!", "Eu acredito em você! Vamos lá?"]
+    mascote, _ = robos.mascote(frases, c.LARANJA, 0.6, comemorar=True)
     c.mostrar(
         page,
         cabecalho,
+        c.painel(mascote, padding=14),
         ft.Text(f"Você tem {total} de {len(badges)} conquistas", size=20, weight=ft.FontWeight.BOLD, color=c.TEXTO),
         ft.ResponsiveRow([cartao(b, i) for i, b in enumerate(badges)], spacing=16, run_spacing=16),
     )

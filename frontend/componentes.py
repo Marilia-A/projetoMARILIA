@@ -28,8 +28,14 @@ def preparar(page: ft.Page):
     _seletor["arquivos"] = seletor
 
 
-def mostrar(page: ft.Page, *controles):
+def mostrar(page: ft.Page, *controles, rodape=None):
+    """Troca o conteúdo da tela. `rodape` fica fixo embaixo (ex.: Voltar/Avançar do roteiro)."""
     page.controls.clear()
+    page.bottom_appbar = (
+        ft.BottomAppBar(content=rodape, bgcolor=FUNDO, padding=ft.Padding.symmetric(horizontal=20, vertical=8))
+        if rodape is not None
+        else None
+    )
     page.add(*controles)
 
 
@@ -104,10 +110,14 @@ def cartao(titulo_cartao: str, subtitulo: str | None = None, icone=ft.Icons.STAR
     )
 
 
-def painel(*controles, padding: int = 20):
-    """Área branca arredondada para agrupar conteúdo."""
+def painel(*controles, padding: int = 20, esticar: bool = False):
+    """Área branca arredondada para agrupar conteúdo. `esticar` faz os campos ocuparem toda a largura."""
     return ft.Container(
-        content=ft.Column(list(controles), spacing=12),
+        content=ft.Column(
+            list(controles),
+            spacing=12,
+            horizontal_alignment=ft.CrossAxisAlignment.STRETCH if esticar else ft.CrossAxisAlignment.START,
+        ),
         bgcolor=ft.Colors.WHITE,
         border_radius=20,
         padding=padding,
@@ -146,6 +156,41 @@ def botao_principal(texto: str, icone=None, ao_clicar=None, cor: str = ROXO, lar
             padding=ft.Padding.symmetric(horizontal=22, vertical=16),
             text_style=ft.TextStyle(size=16, weight=ft.FontWeight.BOLD),
         ),
+    )
+
+
+def botao_secundario(texto: str, icone=None, ao_clicar=None, desativado=False):
+    return ft.OutlinedButton(
+        texto,
+        icon=icone,
+        on_click=ao_clicar,
+        disabled=desativado,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=14),
+            padding=ft.Padding.symmetric(horizontal=22, vertical=16),
+            text_style=ft.TextStyle(size=16, weight=ft.FontWeight.BOLD),
+        ),
+    )
+
+
+def campo(label: str, **params):
+    """Campo de texto com o visual do app (branco, arredondado)."""
+    padrao = {"border_radius": 14, "filled": True, "bgcolor": ft.Colors.WHITE, "text_size": 16}
+    return ft.TextField(label=label, **{**padrao, **params})
+
+
+def numero(valor: float, casas: int = 1) -> str:
+    """Número no formato brasileiro (vírgula decimal)."""
+    return f"{valor:.{casas}f}".replace(".", ",")
+
+
+def botoes_salvar(ao_cancelar, ao_salvar):
+    return ft.Row(
+        [
+            botao_secundario("Cancelar", ft.Icons.CLOSE, ao_cancelar),
+            botao_principal("Salvar", ft.Icons.SAVE, ao_salvar, cor=VERDE),
+        ],
+        spacing=12,
     )
 
 
@@ -248,22 +293,18 @@ def confirmar_exclusao(page: ft.Page, titulo_dialogo: str, mensagem: str, ao_con
     )
 
 
-def cartao_gerenciar(titulo_item: str, subtitulo: str, ao_editar, ao_excluir):
-    return ft.Card(
-        content=ft.ListTile(
-            title=ft.Text(titulo_item, weight=ft.FontWeight.BOLD),
-            subtitle=ft.Text(subtitulo, max_lines=2),
-            trailing=ft.Row(
-                [
-                    ft.IconButton(icon=ft.Icons.EDIT, tooltip="Editar", on_click=ao_editar),
-                    ft.IconButton(
-                        icon=ft.Icons.DELETE,
-                        icon_color=ft.Colors.RED,
-                        tooltip="Excluir",
-                        on_click=ao_excluir,
-                    ),
-                ],
-                tight=True,
-            ),
-        )
+def acoes_editar_excluir(ao_editar, ao_excluir):
+    return ft.Row(
+        [
+            ft.IconButton(icon=ft.Icons.EDIT, icon_color=AZUL, tooltip="Editar", on_click=ao_editar),
+            ft.IconButton(icon=ft.Icons.DELETE, icon_color=ft.Colors.RED_400, tooltip="Excluir", on_click=ao_excluir),
+        ],
+        tight=True,
     )
+
+
+def cartao_gerenciar(titulo_item: str, subtitulo: str, ao_editar, ao_excluir, icone=ft.Icons.DESCRIPTION,
+                     cor: str = AZUL, ao_clicar=None):
+    texto = subtitulo if len(subtitulo) <= 140 else subtitulo[:137] + "..."
+    return cartao(titulo_item, texto, icone, cor, ao_clicar=ao_clicar,
+                  direita=acoes_editar_excluir(ao_editar, ao_excluir))

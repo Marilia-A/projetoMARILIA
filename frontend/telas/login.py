@@ -3,6 +3,7 @@ import flet as ft
 import api
 import componentes as c
 import navegacao
+import robos
 import sessao
 
 
@@ -44,14 +45,14 @@ def mostrar(page: ft.Page, aviso: str | None = None):
 
     campo_senha.on_submit = entrar
 
-    logo = ft.Container(
-        content=ft.Icon(ft.Icons.SMART_TOY, color=ft.Colors.WHITE, size=64),
-        width=110,
-        height=110,
-        border_radius=55,
-        alignment=ft.Alignment.CENTER,
-        gradient=ft.LinearGradient(colors=[c.ROXO, c.AZUL], begin=ft.Alignment.TOP_LEFT, end=ft.Alignment.BOTTOM_RIGHT),
-        shadow=c.sombra(),
+    logo, _ = robos.mascote(
+        [
+            "Oi! Eu sou o robô do MARILIA. Clique em mim!",
+            "Entre com o e-mail e a senha que a escola te deu.",
+            "Hoje é dia de acender LEDs!",
+            "Pronto para virar inventor?",
+        ],
+        escala=0.75,
     )
     cartao_login = ft.Container(
         content=ft.Column(
