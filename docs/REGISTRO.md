@@ -127,6 +127,11 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
   - ⚪ Duas mensagens "O sistema não pode encontrar o caminho especificado" no início do `.bat`, sem efeito na geração (provavelmente da reativação da `.venv` já ativa).
   - ⚪ Nas propriedades do `.exe`: "Nome do arquivo original" aparece como `flet.exe`, idioma Inglês e "Direitos autorais" vazio (padrão do `flet pack`). Dá para preencher com `--copyright` no `.bat`, se quiser.
 - **Código encerrado** por decisão da autora (16/11). Daqui para frente: tag v1.6, teste do `.exe` em outro PC e texto do TCC.
+- **SUS (System Usability Scale), avaliação preliminar pela autora** (16/11), 10 itens padrão em escala de 1 a 5:
+  - respostas: 5, 1, 5, 1, 4, 1, 5, 1, 4, 1;
+  - cálculo: ímpares (resposta − 1) = 4+4+3+4+3 = 18; pares (5 − resposta) = 4+4+4+4+4 = 20; (18 + 20) × 2,5 = **95**;
+  - classificação: acima de 85, faixa "excelente" (Bangor, Kortum e Miller, 2009); nota A+ na escala de Sauro e Lewis (a partir de 84,1);
+  - limitação: uma só respondente, que é a autora do sistema. Deve aparecer no texto como avaliação preliminar, não como teste de usabilidade com usuários. Pontos conhecidos que pesam contra: contraste das cores e primeiro acesso de ~33 s com o servidor dormindo.
 
 ---
 
