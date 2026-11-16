@@ -3,7 +3,7 @@
 Diário do que foi feito no software, blocos de correções, decisões e pendências.
 Atualizado a cada etapa. (Itens de texto do TCC ficam no checklist pessoal; aqui só aparecem quando dependem do software.)
 
-Última atualização: **15/11/2026**
+Última atualização: **16/11/2026**
 
 ---
 
@@ -122,7 +122,11 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
   - `gerar_executavel.bat`: ativa sozinho a `.venv` da raiz (funciona com dois cliques), avisa se faltar o Flet ou o PyInstaller e para com mensagem se der erro; README do front explica o `.\` do PowerShell;
   - testado **na janela** (Flet no navegador, API local com SQLite e IA falsa de 4 s): rodinha aparece durante a espera; 5 cliques geraram 1 pergunta; a resposta aparece na bolha da tutora.
 - Pendente (🟡, apontado na revisão): os outros cliques que chamam a API (salvar, buscar, concluir roteiro, montar a tela de roteiros depois do login) ainda travam a janela durante a resposta. São rápidos com o servidor acordado; corrigir só se incomodar.
-- Próximo passo: gerar e testar o `MARILIA.exe` no Windows.
+- PR #23 (Bloco 17) mesclado pelo botão do site (`9a8f1b4`, committer "GitHub"). O merge local da autora travou no editor `vi` do Git; resolvido com `git reset --hard origin/main` (conteúdo idêntico). Para os próximos merges: `git merge --no-ff --no-edit` ou `git config --global core.editor "code --wait"`.
+- **Executável gerado e testado pela autora** (Windows 11, no próprio computador): `.\gerar_executavel.bat` no PowerShell terminou com "Build complete!" (Python 3.13.7 da `.venv`, PyInstaller 6.22.3, arquivo único sem console). `MARILIA.exe` com **53,9 MB**, versão do arquivo 1.6.0.0 e do produto 1.6.0. Os três perfis (admin, AnaTester e BrunoTester) funcionaram com seus níveis de acesso; o "Entrando..." aparece e o login com o servidor acordado levou cerca de 2 s.
+  - ⚪ Duas mensagens "O sistema não pode encontrar o caminho especificado" no início do `.bat`, sem efeito na geração (provavelmente da reativação da `.venv` já ativa).
+  - ⚪ Nas propriedades do `.exe`: "Nome do arquivo original" aparece como `flet.exe`, idioma Inglês e "Direitos autorais" vazio (padrão do `flet pack`). Dá para preencher com `--copyright` no `.bat`, se quiser.
+- **Código encerrado** por decisão da autora (16/11). Daqui para frente: tag v1.6, teste do `.exe` em outro PC e texto do TCC.
 
 ---
 
@@ -212,7 +216,8 @@ Três arquivos, cada um com o que é necessário para aquela parte. **Escritos e
 ### Para fazer mais tarde (agendado)
 - [x] **Bloco 10 – visual infantil** no Flet (PR #17) + Bloco 12 (gerenciamento no tema e robôs interativos).
 - [x] Prints das telas para o 6.2 e para o README do front (Bloco 13, `docs/prints/`). Refazer no Windows só se o visual mudar.
-- [ ] Testar o `MARILIA.exe` no Windows contra a nuvem (de preferência em outro PC).
+- [x] Testar o `MARILIA.exe` no Windows contra a nuvem: funcionou no computador da autora (16/11).
+- [ ] Testar o `MARILIA.exe` em outro PC, sem Python (laboratório da escola).
 - [x] Item CRÍTICO no Render (14/11).
 - [ ] Tags: `v1.4` (`65cb8cf`) e `v1.5` (`bf08d62`) conferidas no GitHub (15/11). Criar `v1.6` depois do merge do Bloco 17 (executável 1.6.0).
 - [x] Preencher nos READMEs: sigla do MARILIA, orientação/instituição (Bloco 9).
@@ -230,7 +235,7 @@ Revisão de 13/11 dos PRs #1 a #11 (53 verificações automáticas passaram na `
 - ✅ (Bloco 8) 🟡 `.env.example` com `DATABASE_URL` de Postgres ativa: quem copiar sem editar e não tiver Postgres não sobe a API.
 - ✅ (Bloco 8) 🟡 Imagens de itens excluídos/trocados continuam no banco.
 - ✅ (Bloco 8) 🟡 Regra "aluno de turma do professor" repetida em dois lugares (`seguranca.py` e `routers/usuarios.py`) → juntar numa função.
-- 🟡 `gerar_executavel.bat` ainda não testado no Windows.
+- ✅ (16/11) 🟡 `gerar_executavel.bat` testado no Windows: gerou o `MARILIA.exe` 1.6.0.
 - Decisão mantida: professor vê a lista de todos os alunos. Padrão `SEED_USUARIOS_TESTE` já é `false` (Bloco 8).
 
 Revisão de 15/11 do PR #18 (Bloco 12) e do Bloco 13 (PR #19); nenhum erro de código:
