@@ -264,10 +264,11 @@ Revisão de 15/11 do PR #18 (Bloco 12) e do Bloco 13 (PR #19); nenhum erro de c�
 ### Dependências do texto do TCC ligadas ao software
 - ✅ 3.4, 5.1, 5.6 e 6.1: implantação na nuvem, imagens no banco, admin por variável de ambiente, usuários de teste desligados (texto revisado em 14/11).
 - ✅ (16/11) 6.1: **atualizar a frase** do limite de login (Bloco 8 já entrou): 5 erros por e-mail + endereço em 15 min, limite geral de 20 por e-mail.
-- [ ] 5.6: conferir se cita usuários de demonstração por variáveis de ambiente; pela decisão de 15/11 (AnaTester e BrunoTester criadas pelo admin), o 6.1 já diz que as contas foram criadas no aplicativo.
+- ✅ (16/11) 5.6: não cita usuários de demonstração por variáveis de ambiente, nada a mudar; pela decisão de 15/11 (AnaTester e BrunoTester criadas pelo admin), o 6.1 já diz que as contas foram criadas no aplicativo.
 - ✅ (16/11) 6.2: prints novos (`docs/prints/`) e robôs interativos/brincadeiras (Bloco 12).
 - ✅ (16/11) 6.3 e Tabela 7: trocar o "~0,6 s" (medido com o banco vazio em 11/11). Medições de 15/11: 0,7–0,9 s (login errado, servidor acordado), 1,5–2,4 s (login certo, por causa do hash PBKDF2) e ~33 s no primeiro acesso com o servidor dormindo. Falta medir na rede local.
 - ✅ (16/11) Cap. 7: tirar "melhoria do visual para o público infantil" dos trabalhos futuros (Blocos 10 e 12 entraram).
 - ✅ Cap. 7: versão web como trabalho futuro.
 - ✅ (16/11) Texto revisado (arquivos `05_Implementao.tex` = cap. 6 e `06_Consideraes.tex` = cap. 7): SUS como avaliação preliminar pela autora (95, Tabela de respostas, `Bangor2009` no `.bib`), RNF01 preenchido, RNF08 "atendido com adaptação" (login certo 1,5–2,4 s por causa do hash), 4 figuras (`01_login`, `03_roteiro_led`, `11_tutor`, `21_dashboard`), robôs e visual infantil, limitação do servidor gratuito (~33 s), contraste como trabalho futuro.
-- [ ] Conferir no cap. 6 a referência "Zona de Desenvolvimento Proximal discutida no Capítulo 1" (deve ser o cap. 2, Fundamentação).
+- ✅ (16/11) Referência à ZDP no cap. 6 ("Capítulo 1") está certa: a ZDP é apresentada na Introdução.
+- ✅ (16/11) Resumo e Abstract (SUS preliminar, 95 pontos), cap. 5 (Front-End distribuído como executável), cap. 3 (visual infantil a partir do START; testes finais na nuvem e com o `.exe`; SUS como avaliação preliminar) e cap. 1 (4º objetivo sem "conformidade com a SUS"; tutor delimitado ao conteúdo de cada roteiro) atualizados.
