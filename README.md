@@ -108,6 +108,10 @@ Para uso em uma escola, a mesma API pode rodar em um servidor da rede local; bas
 | `v1.1` | Blocos 1 a 3: segurança (JWT obrigatório, e-mail sem maiúsculas, permissões do professor), sessão expirada no app, imagens no banco, implantação na nuvem |
 | `v1.2` | Blocos 4 e 5: app aponta para a nuvem e gera `.exe`; professor restrito aos próprios alunos; tipo de imagem pela extensão; limites de login e de pergunta |
 | `v1.3` | Blocos 8 e 9: limite de login guardado no banco por e-mail e endereço; limpeza de imagens sem uso; usuários de teste desligados por padrão; READMEs completos |
+| `v1.3.1` | Limite de login na nuvem pelo endereço real de quem tenta |
+| `v1.4` | Blocos 10 e 11: visual infantil e usuários de demonstração (guarda o visual de antes do Bloco 12) |
+| `v1.5` | Bloco 12: telas de gerenciamento no tema, rodapé fixo no roteiro e robôs interativos |
+| `v1.6` | Blocos 15 a 17: login e tutor sem travar a janela (aviso de espera, cliques repetidos ignorados); `gerar_executavel.bat` com dois cliques; executável 1.6.0 |
 
 O histórico detalhado está em [docs/REGISTRO.md](docs/REGISTRO.md).
 

@@ -3,7 +3,7 @@
 Diário do que foi feito no software, blocos de correções, decisões e pendências.
 Atualizado a cada etapa. (Itens de texto do TCC ficam no checklist pessoal; aqui só aparecem quando dependem do software.)
 
-Última atualização: **16/11/2026**
+Última atualização: **21/11/2026**
 
 ---
 
@@ -29,6 +29,7 @@ Atualizado a cada etapa. (Itens de texto do TCC ficam no checklist pessoal; aqui
 | v1.3.1 | `caf7b48` | Limite de login na nuvem pelo endereço real (PR #15) |
 | v1.4 | `65cb8cf` | Blocos 10 e 11 – visual infantil + usuários de demonstração. **Guarda o visual de antes do Bloco 12.** |
 | v1.5 | `bf08d62` | Bloco 12 – telas de gerenciamento no tema, rodapé fixo no roteiro e robôs interativos (PR #18) |
+| v1.6 | `9a8f1b4` | Blocos 15 a 17 – login e tutor assíncronos, aviso de espera no login, `gerar_executavel.bat` com dois cliques, executável 1.6.0 (PRs #21 a #23) |
 
 Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blocos já mesclados no `main`.
 
@@ -133,6 +134,10 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
   - classificação: acima de 85, faixa "excelente" (Bangor, Kortum e Miller, 2009); nota A+ na escala de Sauro e Lewis (a partir de 84,1);
   - limitação: uma só respondente, que é a autora do sistema. Deve aparecer no texto como avaliação preliminar, não como teste de usabilidade com usuários. Pontos conhecidos que pesam contra: contraste das cores e primeiro acesso de ~33 s com o servidor dormindo.
 
+### 21/11/2026
+- **Revisão geral**: `main` em `9b60b12`, sem alterações pendentes; código do back e do front compila; API local (SQLite) testada: raiz 200, rotas sem token 401, login com e-mail em maiúsculas 200, seed com 5 roteiros e 12 termos, 6 senhas erradas → 429, pergunta de 501 caracteres → 422. API no Render respondendo (200, ~32 s com o servidor dormindo).
+- Tags `v1.0` a `v1.6` conferidas no GitHub; tabela de versões do README e "Situação geral" deste registro completadas até a `v1.6`.
+
 ---
 
 ## Como trabalhamos (vale para todas as sessões)
@@ -224,7 +229,7 @@ Três arquivos, cada um com o que é necessário para aquela parte. **Escritos e
 - [x] Testar o `MARILIA.exe` no Windows contra a nuvem: funcionou no computador da autora (16/11).
 - [ ] Testar o `MARILIA.exe` em outro PC, sem Python (laboratório da escola).
 - [x] Item CRÍTICO no Render (14/11).
-- [ ] Tags: `v1.4` (`65cb8cf`) e `v1.5` (`bf08d62`) conferidas no GitHub (15/11). Criar `v1.6` depois do merge do Bloco 17 (executável 1.6.0).
+- [x] Tags: `v1.4` (`65cb8cf`) e `v1.5` (`bf08d62`) conferidas no GitHub (15/11); `v1.6` em `9a8f1b4` (merge do Bloco 17) conferida no GitHub (21/11).
 - [x] Preencher nos READMEs: sigla do MARILIA, orientação/instituição (Bloco 9).
 - [x] Padronizar os nomes dos roteiros entre texto e `backend/seed.py` (o texto do TCC passou a usar os nomes do app, 14/11) ("Luz Noturna Automática" × "Luz Noturna com LDR"; "Alarme com Sensor de Presença" × "Alarme com Sensor PIR").
 - [x] Corrigir as falhas que a verificação dos PRs apontou (Bloco 8, PR #13).
