@@ -29,24 +29,66 @@ def markdown(texto: str) -> ft.Markdown:
     )
 
 
-def avisar_badges(page: ft.Page, badges: list):
-    def ver_conquistas(e):
+def celebrar_conclusao(page: ft.Page, titulo_roteiro: str, badges: list):
+    """Janela de parabéns ao concluir o roteiro (com as conquistas novas, se houver).
+
+    Ao fechar, o aluno volta sozinho para a lista de roteiros.
+    """
+    estado = {"saiu": False}
+
+    def sair(destino: str):
+        if estado["saiu"]:
+            return
+        estado["saiu"] = True
         page.pop_dialog()
-        navegacao.ir("conquistas")
+        navegacao.ir(destino)
+
+    robo = robos.Robo(c.VERDE, 0.6)
+    robo.sorriso(True)
+    robo.luz_peito(c.AMARELO)
+
+    conteudo = [
+        ft.Row([robo.controle], alignment=ft.MainAxisAlignment.CENTER),
+        ft.Text(
+            f"Parabéns por concluir o roteiro “{titulo_roteiro}”! Mandou bem!",
+            size=18, weight=ft.FontWeight.BOLD, color=c.TEXTO, text_align=ft.TextAlign.CENTER,
+        ),
+    ]
+    if badges:
+        conteudo.append(
+            ft.Row(
+                [ft.Icon(ft.Icons.EMOJI_EVENTS, color=ft.Colors.AMBER),
+                 ft.Text("Nova conquista!", size=18, weight=ft.FontWeight.BOLD, color=c.TEXTO)],
+                alignment=ft.MainAxisAlignment.CENTER,
+            )
+        )
+        conteudo += [
+            ft.Text(f"{b['nome']}: {b['criterio']}", size=16, color=c.TEXTO, text_align=ft.TextAlign.CENTER)
+            for b in badges
+        ]
+    else:
+        conteudo.append(
+            ft.Text("Continue assim e escolha o próximo desafio!", size=16, color=c.TEXTO_SUAVE,
+                    text_align=ft.TextAlign.CENTER)
+        )
+
+    acoes = [c.botao_principal("OK", ft.Icons.CHECK, lambda e: sair("roteiros"), cor=c.VERDE)]
+    if badges:
+        acoes.insert(0, ft.TextButton("Ver conquistas", on_click=lambda e: sair("conquistas")))
 
     page.show_dialog(
         ft.AlertDialog(
-            title=ft.Row([ft.Icon(ft.Icons.EMOJI_EVENTS, color=ft.Colors.AMBER), ft.Text("Nova conquista!")]),
-            content=ft.Column(
-                [ft.Text(f"{b['nome']}: {b['criterio']}", size=16) for b in badges],
-                tight=True,
-            ),
-            actions=[
-                ft.TextButton("Fechar", on_click=lambda e: page.pop_dialog()),
-                ft.FilledButton("Ver conquistas", on_click=ver_conquistas),
-            ],
+            modal=True,
+            title=ft.Text("Roteiro concluído!", text_align=ft.TextAlign.CENTER, color=c.VERDE,
+                          weight=ft.FontWeight.BOLD),
+            content=ft.Column(conteudo, tight=True, spacing=12,
+                              horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            actions=acoes,
+            actions_alignment=ft.MainAxisAlignment.CENTER,
+            on_dismiss=lambda e: sair("roteiros"),
         )
     )
+    return robo
 
 
 def mostrar(page: ft.Page, roteiro_id: int):
@@ -233,44 +275,53 @@ def mostrar(page: ft.Page, roteiro_id: int):
         bolha_resposta,
     ]
 
-    if eh_aluno:
+    # Botão de concluir: aparece no rodapé da última página, no lugar do "Avançar".
+    botao_concluir = None
+    if eh_aluno and progresso["status"] == "concluido":
         robo_festa = robos.Robo(c.VERDE, 0.55, dica="Parabéns!")
         robo_festa.sorriso(True)
         robo_festa.luz_peito(c.AMARELO)
-        texto_concluido = ft.Row(
-            [
-                robo_festa.controle,
-                ft.Text("Roteiro concluído! Mandou bem!", color=c.VERDE, weight=ft.FontWeight.BOLD, size=20),
-            ],
-            spacing=12,
-        )
-        aviso_erro = ft.Text("", color=ft.Colors.RED)
+        pagina_duvidas += [
+            ft.Divider(),
+            ft.Row(
+                [
+                    robo_festa.controle,
+                    ft.Text("Roteiro concluído! Mandou bem!", color=c.VERDE, weight=ft.FontWeight.BOLD, size=20),
+                ],
+                spacing=12,
+            ),
+        ]
+    elif eh_aluno:
+        aviso_erro = ft.Text("", color=ft.Colors.RED, size=16)
+        pagina_duvidas.append(aviso_erro)
+        estado_conclusao = {"enviando": False}
 
-        def ajustar_conclusao():
-            concluido = progresso["status"] == "concluido"
-            botao_concluir.visible = not concluido
-            texto_concluido.visible = concluido
-
+        # Assíncrono, como o login e o tutor: a janela não trava e cliques repetidos são ignorados.
         async def concluir(e):
-            novas = []
+            if estado_conclusao["enviando"]:
+                return
+            estado_conclusao["enviando"] = True
+            botao_concluir.disabled = True
+            aviso_erro.value = ""
+            page.update()
             try:
-                resultado = api.atualizar_progresso(usuario["id"], roteiro_id, "concluido")
-                progresso["status"] = "concluido"
-                novas = resultado.get("novas_badges", [])
-                aviso_erro.value = ""
+                resultado = await asyncio.to_thread(
+                    api.atualizar_progresso, usuario["id"], roteiro_id, "concluido"
+                )
             except api.ErroAPI as erro:
                 aviso_erro.value = erro.mensagem
-            ajustar_conclusao()
-            page.update()
-            if progresso["status"] == "concluido":
-                for _ in range(3):
-                    await robo_festa.pular()
-            if novas:
-                avisar_badges(page, novas)
+                botao_concluir.disabled = False
+                estado_conclusao["enviando"] = False
+                page.update()
+                return
+            except sessao.SessaoExpirada:
+                return
+            progresso["status"] = "concluido"
+            robo = celebrar_conclusao(page, roteiro["titulo"], resultado.get("novas_badges", []))
+            for _ in range(3):
+                await robo.pular()
 
-        botao_concluir = c.botao_principal("Marcar como concluído", ft.Icons.CHECK, concluir, cor=c.VERDE)
-        ajustar_conclusao()
-        pagina_duvidas += [ft.Divider(), botao_concluir, texto_concluido, aviso_erro]
+        botao_concluir = c.botao_principal("Concluir roteiro", ft.Icons.CHECK, concluir, cor=c.VERDE)
 
     paginas.append(("Tire suas dúvidas", pagina_duvidas))
 
@@ -301,15 +352,20 @@ def mostrar(page: ft.Page, roteiro_id: int):
                 ft.Text(nome, size=22, weight=ft.FontWeight.BOLD, color=c.ROXO),
                 *conteudo,
             ),
-            # Voltar/Avançar ficam sempre no mesmo lugar, fixos no rodapé da janela.
+            # Rodapé fixo: Voltar à esquerda, Avançar à direita. Na última página o Avançar
+            # some; para o aluno, o "Concluir roteiro" aparece no centro.
             rodape=ft.Row(
                 [
-                    c.botao_secundario("Voltar", ft.Icons.ARROW_BACK, lambda e: mudar_pagina(-1), desativado=i == 0),
-                    c.botao_principal(
-                        "Avançar", ft.Icons.ARROW_FORWARD, lambda e: mudar_pagina(1), desativado=ultima
+                    ft.Container(
+                        c.botao_secundario("Voltar", ft.Icons.ARROW_BACK, lambda e: mudar_pagina(-1), desativado=i == 0),
+                        expand=1, alignment=ft.Alignment.CENTER_LEFT,
+                    ),
+                    ft.Container(botao_concluir if ultima else None, expand=1, alignment=ft.Alignment.CENTER),
+                    ft.Container(
+                        None if ultima else c.botao_principal("Avançar", ft.Icons.ARROW_FORWARD, lambda e: mudar_pagina(1)),
+                        expand=1, alignment=ft.Alignment.CENTER_RIGHT,
                     ),
                 ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             ),
         )
         page.run_task(page.scroll_to, offset=0, duration=0)
