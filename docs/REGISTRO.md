@@ -137,6 +137,12 @@ Regra das tags: **v1.0 nunca muda** (main original). As demais acompanham os blo
 ### 21/11/2026
 - **Revisão geral**: `main` em `9b60b12`, sem alterações pendentes; código do back e do front compila; API local (SQLite) testada: raiz 200, rotas sem token 401, login com e-mail em maiúsculas 200, seed com 5 roteiros e 12 termos, 6 senhas erradas → 429, pergunta de 501 caracteres → 422. API no Render respondendo (200, ~32 s com o servidor dormindo).
 - Tags `v1.0` a `v1.6` conferidas no GitHub; tabela de versões do README e "Situação geral" deste registro completadas até a `v1.6`.
+- **Código reaberto** pela autora para sugestões do orientador, com novo `.exe` antes da entrega (segunda-feira, 23/11).
+- **Bloco 22 – tutor sem nome do aluno e conclusão do roteiro** (branch `bloco-22-tutor-conclusao`):
+  - tutor: num teste com outra conta, a IA respondeu "Oi, Marília!". Conferido: a API não envia nenhum dado do aluno (só as instruções, o conteúdo do roteiro e a pergunta; o `aluno_id` serve só para a permissão e o histórico). Causa provável: o prompt começa com "Você é o tutor do MARILIA" e o modelo tomou o nome do app pelo nome de quem pergunta. Instruções ganharam uma regra de privacidade: MARILIA é o nome do aplicativo, o tutor não sabe quem é o aluno, não chama ninguém pelo nome e não pede dados pessoais;
+  - roteiro: na última página o "Avançar" some; o rodapé fica com "Voltar" à esquerda e, para o aluno, "Concluir roteiro" no centro (antes "Marcar como concluído", dentro da página). Professor/admin e aluno com o roteiro já concluído veem só o "Voltar";
+  - concluir: o clique é assíncrono (cliques repetidos ignorados); abre uma janela "Roteiro concluído!" com o robô comemorando, a mensagem "Parabéns por concluir o roteiro “nome”! Mandou bem!" e as conquistas novas, se houver. Ao apertar OK o aluno volta sozinho para a lista de roteiros (com conquista nova, também há "Ver conquistas");
+  - testado **na janela** (Flet no navegador, API local com SQLite): rodapé nas páginas do meio e na última; clique duplo gerou 1 pedido de conclusão; janela com conquista (Primeiro Circuito, Explorador) e sem conquista (Semáforo); OK volta à lista com o roteiro marcado "Concluído"; roteiro já concluído e professor sem o botão. A resposta real da IA não foi testada aqui (sem chave do Groq no ambiente): conferir no app com a nuvem.
 
 ---
 
@@ -256,6 +262,14 @@ Revisão de 15/11 do PR #18 (Bloco 12) e do Bloco 13 (PR #19); nenhum erro de c�
 - ⚪ **Prints com contas misturadas**: 17 e 20 usam "Aluno Demonstração" (API local); 21 e 22 usam AnaTester (nuvem). Resolvido pela decisão de usar só AnaTester e BrunoTester; refazer os prints 17 e 20 se forem para o TCC.
 - ⚪ **"8 ano" sem o º** no nome da turma da conta de teste (as outras telas mostram "8º ano").
 - ⚪ **Print 22 cortado**: a seção "Perguntas ao tutor" só mostra o título.
+
+### Trabalhos futuros anotados (para o cap. 7)
+- [ ] **Vídeos nos roteiros** (sugestão do orientador, 21/11): permitir colocar vídeos ou links de vídeo nos roteiros e nas etapas, no mesmo esquema do envio de imagens. Sugestão de frase para o cap. 7, junto da lista que já cita imagens curadas e versão web: "a inclusão de vídeos nos roteiros, por arquivo ou por link, da mesma forma que as imagens".
+
+### Para conferir depois do Bloco 22
+- [ ] Print `11_tutor` (figura do cap. 6) mostra o "Avançar" na última página: refazer no Windows com o rodapé novo (sem "Avançar", com "Concluir roteiro" no centro).
+- [ ] Opcional no 6.2 (uma frase): depois de concluir, o aplicativo mostra uma mensagem de parabéns e volta à lista de roteiros. O texto atual ("o aluno pode marcar o roteiro como concluído") continua correto sem isso.
+- [ ] Gerar o `.exe` novo (versão 1.7.0 no `gerar_executavel.bat`) e testar com as contas AnaTester/BrunoTester e uma conta com outro nome (tutor não deve chamar ninguém pelo nome).
 
 ### Melhorias opcionais
 - [ ] Dashboard com menos consultas por aluno
